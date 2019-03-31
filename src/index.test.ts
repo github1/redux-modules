@@ -14,7 +14,7 @@ describe('when a store is created', () => {
                 state.actions.push(action);
                 return state;
             },
-            middleware: store => next => action => {
+            middleware: () => next => action => {
                 action.modifications = action.type + '1';
                 next(action);
             }
@@ -22,6 +22,43 @@ describe('when a store is created', () => {
         store.dispatch({type: 'hi'});
         expect(store.getState().test.actions[1].type).toBe('hi');
         expect(store.getState().test.actions[1].modifications).toBe('hi1');
+    });
+
+    describe('preloadedState', () => {
+        it('loads preloadedState from an object', () => {
+            const store = Module.createStore(Module
+                .fromReducer('something', state => state), {something: 'hi'});
+            expect(store.getState().something).toBe('hi');
+        });
+        it('loads preloadedState from modules', () => {
+            const store = Module.createStore(Module
+                .fromReducer('something', state => state), Module.preloadedState({something: 'hi'}));
+            expect(store.getState().something).toBe('hi');
+        });
+        it('loads preloadedState from modules when calling inStore', () => {
+            const store = Module
+                .fromReducer('something', state => state)
+                .inStore(Module.preloadedState({something: 'hi'}));
+            expect(store.getState().something).toBe('hi');
+        });
+        it('uses the name of a preloadeState module', () => {
+            const store = Module
+                .fromReducer('something', state => state)
+                .inStore({
+                    name: 'something',
+                    preloadedState: 'hi'
+                });
+            expect(store.getState().something).toBe('hi');
+        });
+        it('handles names with slashes', () => {
+            const store = Module
+                .fromReducer('something/foo', state => state)
+                .inStore({
+                    name: 'something/foo',
+                    preloadedState: 'hi'
+                });
+            expect(store.getState().something.foo).toEqual('hi');
+        });
     });
 
     it('merges module reducers based on slash notation', () => {
@@ -44,8 +81,8 @@ describe('when a store is created', () => {
     });
 
     describe('when there are existing middlewares and reducers', () => {
-        it('can be wrapped them as modules', () => {
-            const middleware = store => next => action => {
+        it('can wrap them as modules', () => {
+            const middleware = () => next => action => {
                 action.modifications = action.type + '2';
                 next(action);
             };
@@ -93,11 +130,11 @@ describe('when a store is created', () => {
         });
         describe('when an action is matched', () => {
             it('can return an action', () => {
-                const store = Module.fromMiddleware(interceptor((action) => {
+                const store = Module.fromInterceptor((action) => {
                     if (action.type === 'TEST') {
                         return {type: 'ANOTHER_ACTION', trigger: action};
                     }
-                })).inRecordedStore();
+                }).inRecordedStore();
                 store.dispatch({type: 'TEST'});
                 expect(store.getState().recording.actions[1].type).toBe('TEST');
                 expect(store.getState().recording.actions[2].type).toBe('ANOTHER_ACTION');
@@ -146,7 +183,7 @@ describe('when a store is created', () => {
         it('is applied to the root state', () => {
             const store = Module.createStore(
                 Module.fromReducer(recordingReducer),
-                Module.fromReducer((state = {actions: []}) => {
+                Module.fromReducer((state : any = {actions: []}) => {
                     state.anotherReducer = state.actions.length;
                     return state;
                 })
@@ -181,12 +218,11 @@ describe('when a store is created', () => {
         });
     });
 
-    it('can return a react-redux connect function', () => {
-        Module.fromReducer(recordingReducer).connect()(() => {
-        });
-    });
-
     describe('when connecting modules', () => {
+        it('can return a react-redux connect function', () => {
+            expect(typeof Module.fromReducer(recordingReducer).connect()(() => {
+            })).toBe('function');
+        });
         it('uses a default mapStateToProps function', () => {
             const connect = jest.fn();
             connectModule(connect, Module.fromReducer(recordingReducer));
@@ -209,5 +245,37 @@ describe('when a store is created', () => {
         });
     });
 
+    describe('enforceImmutableState', () => {
+        it('makes the state immutable', () => {
+            expect.assertions(1);
+            const store = Module.createStore(Module.fromReducer((state, action) => {
+                if (action.type == 'test-action') {
+                    state.data = 'mutated';
+                    return state;
+                }
+            }).enforceImmutableState(), {
+                root: {
+                    data: 'initial'
+                }
+            });
+            try {
+                store.dispatch({type: 'test-action'});
+            } catch (err) {
+                expect(err.message).toMatch('mutation was detected');
+            }
+        });
+    });
+
+    describe('post configure actions', () => {
+        it('can dispatch actions after the store is created', () => {
+            const store = Module.create({
+                name: 'test',
+                postConfigure: store => {
+                    store.dispatch({type: 'TEST'});
+                }
+            }).inRecordedStore();
+            expect(store.getState().recording.containsType('TEST')).toBe(true);
+        });
+    });
 
 });
