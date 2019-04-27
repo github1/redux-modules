@@ -96,7 +96,9 @@ export class Module implements ModuleLike {
     }
 
     inStore(...modules : ModuleLike[]) {
-        const concreteModules : Module[] = modules.map((module : any) => module instanceof Module ? module : Module.create(module));
+        const concreteModules : Module[] = modules
+            .filter(module => module)
+            .map(module => module instanceof Module || module.constructor.name === 'Module' ? module as Module : Module.create(module));
         concreteModules.unshift(this);
         return Module.createStore(...concreteModules);
     }
@@ -129,7 +131,9 @@ export class Module implements ModuleLike {
     }
 
     static createStore<S = any, A extends Action = AnyAction>(...modules : any) : Store<S, A> {
-        modules = modules.map(module => module instanceof Module ? module : Module.preloadedState(module));
+        modules = modules
+            .filter(module => module)
+            .map(module => module.constructor.name === 'Module' ? module : Module.preloadedState(module));
         const reducerGroups = modules.reduce((reducers, module) => {
             if (module.reducer) {
                 let reducerName = module.name;
