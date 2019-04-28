@@ -1,7 +1,7 @@
 {
   "name": "@github1/redux-modules",
   "private": false,
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "main": "dist/src/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "author": "John Collier <john.collier4@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@common/build-tools": "^0.0.0",
+    "@github1/build-tools": "0.0.11",
     "redux": "^4.0.0",
     "redux-immutable-state-invariant": "2.1.0"
   },
