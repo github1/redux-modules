@@ -1,11 +1,12 @@
 {
   "name": "@github1/redux-modules",
   "private": false,
-  "version": "0.0.12",
+  "version": "0.0.16",
   "description": "",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "scripts": {
-    "build": "rm -rf ./dist && build-tools build",
+    "build": "build-tools-build-lib",
     "test": "NO_SERVER=true build-tools test --coverage",
     "test:watch": "NO_SERVER=true build-tools test --watch --coverage",
     "prepublishOnly": "npm run build"
@@ -14,7 +15,7 @@
   "author": "John Collier <john.collier4@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@github1/build-tools": "0.0.12",
+    "@github1/build-tools": "0.0.16",
     "redux": "^4.0.0",
     "redux-immutable-state-invariant": "2.1.0"
   },
