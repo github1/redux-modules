@@ -35,7 +35,8 @@ interface ModuleLike {
     middleware? : Middleware | Middleware[];
     actions? : {},
     postConfigure? : PostConfigure,
-    preloadedState? : any
+    preloadedState? : any,
+    ___m?: boolean;
 }
 
 export const connectModule = (connect, module : Module, mapStateToProps = (state) => state) => {
@@ -48,6 +49,8 @@ export const connectModule = (connect, module : Module, mapStateToProps = (state
 const handleUndefinedState = state => state === undefined ? {} : state;
 
 export class Module implements ModuleLike {
+
+    public ___m : boolean;
 
     public _ : any;
 
@@ -76,6 +79,7 @@ export class Module implements ModuleLike {
             // nothing
         }
         this._ = connectModule(connect, this);
+        this.___m = true;
     }
 
     connect(mapStateToProps?) {
@@ -98,7 +102,7 @@ export class Module implements ModuleLike {
     inStore(...modules : ModuleLike[]) {
         const concreteModules : Module[] = modules
             .filter(module => module)
-            .map(module => module instanceof Module || module.constructor === Module ? module as Module : Module.create(module));
+            .map(module => isModuleType(module) ? module as Module : Module.create(module));
         concreteModules.unshift(this);
         return Module.createStore(...concreteModules);
     }
@@ -133,7 +137,7 @@ export class Module implements ModuleLike {
     static createStore<S = any, A extends Action = AnyAction>(...modules : any) : Store<S, A> {
         modules = modules
             .filter(module => module)
-            .map(module => module instanceof Module || module.constructor === Module ? module : Module.preloadedState(module));
+            .map(module => isModuleType(module) ? module : Module.preloadedState(module));
         const reducerGroups = modules.reduce((reducers, module) => {
             if (module.reducer) {
                 let reducerName = module.name;
@@ -218,6 +222,10 @@ const setTopLevelKeys = (object, dest, subKey?) => {
         }
         return object;
     }
+};
+
+const isModuleType = (object : ModuleLike) : boolean => {
+    return object instanceof Module || object.constructor === Module || object.___m;
 };
 
 const initSubKeys = (object, subKey, value?) => {
