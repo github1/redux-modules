@@ -1,7 +1,7 @@
 {
   "name": "@github1/redux-modules",
   "private": false,
-  "version": "0.0.16",
+  "version": "0.0.0",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -13,11 +13,12 @@
   },
   "keywords": [],
   "author": "John Collier <john.collier4@gmail.com>",
-  "license": "MIT",
+  "license": "ISC",
   "devDependencies": {
-    "@github1/build-tools": "0.0.16",
+    "@github1/build-tools": "^0.0.0",
+    "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "redux-immutable-state-invariant": "2.1.0"
+    "redux-immutable-state-invariant": "2.1.0",
   },
   "peerDependencies": {
     "react-redux": "^5.0.7",
@@ -25,10 +26,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "dependencies": [],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/github1/redux-modules"
   }
 }
