@@ -2,7 +2,7 @@
   "name": "@github1/redux-modules",
   "private": false,
   "version": "0.0.16",
-  "description": "",
+  "description": "An implementation of the [redux modules](https://github.com/erikras/ducks-modular-redux) pattern to modularize redux reducers, middleware and action creators",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
