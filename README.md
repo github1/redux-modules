@@ -12,9 +12,7 @@ npm install @github1/redux-modules --save-dev
 ```
 
 ## Usage
-
 TBD
 
 ## License
-
 [MIT](LICENSE.md)
