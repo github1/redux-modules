@@ -18,7 +18,7 @@
     "@github1/build-tools": "^0.0.0",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "redux-immutable-state-invariant": "2.1.0",
+    "redux-immutable-state-invariant": "2.1.0"
   },
   "peerDependencies": {
     "react-redux": "^5.0.7",
