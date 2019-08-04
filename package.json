@@ -1,0 +1,22 @@
+{
+  "name": "@common/redux-modules",
+  "private": "true",
+  "version": "0.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "NO_SERVER=true build-tools test --coverage",
+    "test:watch": "NO_SERVER=true build-tools test --watch --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@common/build-tools": "^0.0.0",
+    "redux-immutable-state-invariant": "2.1.0"
+  },
+  "peerDependencies": {
+    "react-redux": "^5.0.7",
+    "redux": "^4.0.0"
+  }
+}
