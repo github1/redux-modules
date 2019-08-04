@@ -1,4 +1,4 @@
-# @github1/react-redux-common-modules
+# @github1/redux-modules
 
 [description]
 
@@ -6,7 +6,7 @@
 
 ## Install
 ```shell
-npm install @github1/react-redux-common-modules --save-dev
+npm install @github1/redux-modules --save-dev
 ```
 
 ## Usage
