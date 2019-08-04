@@ -10,8 +10,8 @@
     "test:watch": "NO_SERVER=true build-tools test --watch --coverage"
   },
   "keywords": [],
-  "author": "",
-  "license": "",
+  "author": "John Collier <john.collier4@gmail.com>",
+  "license": "ISC",
   "devDependencies": {
     "@common/build-tools": "^0.0.0",
     "redux": "^4.0.0",
