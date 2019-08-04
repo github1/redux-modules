@@ -1,4 +1,4 @@
-# @github1/redux-modules
+# @github1/react-redux-common-modules
 
 An implementation of the [redux modules](https://github.com/erikras/ducks-modular-redux) pattern to modularize redux reducers, middleware and action creators
 
@@ -8,7 +8,7 @@ An implementation of the [redux modules](https://github.com/erikras/ducks-modula
 
 ## Install
 ```shell
-npm install @github1/redux-modules --save-dev
+npm install @github1/react-redux-common-modules --save-dev
 ```
 
 ## Usage
