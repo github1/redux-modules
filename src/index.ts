@@ -29,7 +29,7 @@ interface PostConfigure {
     (store: Store): void;
 }
 
-interface ModuleLike {
+export interface ModuleLike {
     name? : string;
     reducer? : Reducer;
     middleware? : Middleware | Middleware[];
