@@ -1,7 +1,7 @@
 {
   "name": "@github1/redux-modules",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.3.6",
   "description": "An implementation of the [redux modules](https://github.com/erikras/ducks-modular-redux) pattern to modularize redux reducers, middleware and action creators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,9 +13,9 @@
   },
   "keywords": [],
   "author": "John Collier <john.collier4@gmail.com>",
-  "license": "",
+  "license": "MIT",
   "devDependencies": {
-    "@github1/build-tools": "^0.0.0",
+    "@github1/build-tools": "0.3.6",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
     "redux-immutable-state-invariant": "2.1.0"
@@ -26,5 +26,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:github1/redux-modules.git"
   }
 }
