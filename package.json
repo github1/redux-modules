@@ -3,7 +3,8 @@
   "private": false,
   "version": "0.3.5",
   "description": "An implementation of the [redux modules](https://github.com/erikras/ducks-modular-redux) pattern to modularize redux reducers, middleware and action creators",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "build-tools-build-lib",
     "test": "NO_SERVER=true build-tools test --coverage",
