@@ -59,7 +59,13 @@ export class Module implements ModuleLike {
             const newState = JSON.parse(JSON.stringify(state));
             newState.actions.push(action);
             newState.containsType = (type) => newState.actions.filter(action => action.type === type).length > 0;
-            newState.findType = (type) => newState.actions.filter(action => action.type === type);
+            newState.findType = (type, handler) => {
+              const found = newState.actions.filter(action => action.type === type);
+              if (handler) {
+                handler(found);
+              }
+              return found;
+            };
             newState.types = newState.actions.map((action, index) => `[${index}] ${action.type}`).join('\n');
             return newState;
         });
