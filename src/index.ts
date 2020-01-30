@@ -5,7 +5,7 @@ import {
   bindActionCreators,
   combineReducers,
   createStore,
-  DeepPartial,
+  PreloadedState,
   Dispatch,
   Middleware,
   MiddlewareAPI,
@@ -55,12 +55,14 @@ export class Module implements ModuleLike {
     public _ : any;
 
     static RecordingModule() {
+        const latestActions : Array<AnyAction> = [];
         return Module.fromReducer('recording', (state = {actions: []}, action) => {
             const newState = JSON.parse(JSON.stringify(state));
             newState.actions.push(action);
-            newState.containsType = (type) => newState.actions.filter(action => action.type === type).length > 0;
+            latestActions.push(action);
+            newState.containsType = (type) => latestActions.filter(action => action.type === type).length > 0;
             newState.findType = (type, handler?) => {
-              const found = newState.actions.filter(action => action.type === type);
+              const found = latestActions.filter(action => action.type === type);
               if (handler) {
                 handler(found);
               }
@@ -214,7 +216,7 @@ export class Module implements ModuleLike {
         }, {});
         const store = createStore<S, A, any, any>(
             reducers,
-            preloadedState as DeepPartial<S>,
+            preloadedState as PreloadedState<S>,
             applyMiddleware(...middlewares));
         modules.forEach(module => {
             if(module.postConfigure) {
