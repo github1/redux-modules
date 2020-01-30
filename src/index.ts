@@ -1,17 +1,17 @@
 import {
-    Action,
-    AnyAction,
-    applyMiddleware,
-    bindActionCreators,
-    combineReducers,
-    createStore,
-    Dispatch,
-    Middleware,
-    MiddlewareAPI,
-    Reducer,
-    ReducersMapObject,
-    Store,
-    DeepPartial
+  Action,
+  AnyAction,
+  applyMiddleware,
+  bindActionCreators,
+  combineReducers,
+  createStore,
+  DeepPartial,
+  Dispatch,
+  Middleware,
+  MiddlewareAPI,
+  Reducer,
+  ReducersMapObject,
+  Store
 } from 'redux';
 import {connect} from 'react-redux'
 
@@ -59,12 +59,27 @@ export class Module implements ModuleLike {
             const newState = JSON.parse(JSON.stringify(state));
             newState.actions.push(action);
             newState.containsType = (type) => newState.actions.filter(action => action.type === type).length > 0;
-            newState.findType = (type, handler) => {
+            newState.findType = (type, handler?) => {
               const found = newState.actions.filter(action => action.type === type);
               if (handler) {
                 handler(found);
               }
               return found;
+            };
+            newState.waitForType = (type, timeout = 1000) : Promise<any> => {
+              return new Promise((resolve, reject) => {
+                const timeoutRef = setTimeout(() => reject(`Exceeded timeout of ${timeout} waiting for ${type}`), timeout);
+                const checkForType = () => {
+                  const found = newState.findType(type);
+                  if (found.length > 0) {
+                    clearTimeout(timeoutRef);
+                    resolve(found);
+                  } else {
+                    setTimeout(() => checkForType(), 1);
+                  }
+                };
+                checkForType();
+              });
             };
             newState.types = newState.actions.map((action, index) => `[${index}] ${action.type}`).join('\n');
             return newState;
