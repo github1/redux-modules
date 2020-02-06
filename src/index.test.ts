@@ -1,4 +1,8 @@
-import { Module, connectModule, interceptor } from './index';
+import {
+  connectModule,
+  interceptor,
+  Module
+} from './index';
 
 const recordingReducer = (state = {actions: []}, action) => {
     state.actions.push(action);
@@ -276,6 +280,23 @@ describe('when a store is created', () => {
             }).inRecordedStore();
             expect(store.getState().recording.containsType('TEST')).toBe(true);
         });
+    });
+
+    describe('recording-module', () => {
+      it('can wait for actions to dispatch', () => {
+        expect.assertions(1);
+        const store = Module.create({name: 'test'}).inRecordedStore();
+        const promise = store
+          .getState().recording.waitForType((action) => action.type === 'SOMETHING')
+          .then((found) => {
+            expect(found.length).toBe(2);
+          });
+        setTimeout(() => {
+          store.dispatch({type: 'SOMETHING'});
+          store.dispatch({type: 'SOMETHING'});
+        }, 1);
+        return promise;
+      });
     });
 
 });
