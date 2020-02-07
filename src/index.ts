@@ -39,10 +39,10 @@ export interface ModuleLike {
   ___m? : boolean;
 }
 
-export const connectModule = (connect, module : Module, mapStateToProps = (state) => state) => {
+export const connectModule = (connect, module : Module, mapStateToProps = (state) => state, actions?: any) => {
   return connect(
     mapStateToProps || ((state) => state),
-    dispatch => bindActionCreators((module as any as { actions : any }).actions, dispatch)
+    dispatch => bindActionCreators(actions || (module as any as { actions : any }).actions, dispatch)
   );
 };
 
@@ -107,8 +107,8 @@ export class Module implements ModuleLike {
     this.___m = true;
   }
 
-  connect(mapStateToProps?) {
-    return connectModule(connect, this, mapStateToProps);
+  connect(mapStateToProps?, actions?: any) {
+    return connectModule(connect, this, mapStateToProps, actions);
   }
 
   enforceImmutableState() {
