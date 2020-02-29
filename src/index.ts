@@ -17,12 +17,16 @@ import {connect} from 'react-redux'
 
 const ROOT_MODULE : string = 'root';
 
-interface InterceptorFunction<A extends Action = AnyAction, S = any> {
-  (action? : A, state? : S) : any | void;
-}
+type ActionOrThunk = AnyAction | ((dispatch: Dispatch) => any);
 
 interface ActionHolder {
-  action : Action;
+  action : ActionOrThunk;
+}
+
+export type ActionsOrThunks = ActionOrThunk | Array<ActionOrThunk> | ActionHolder;
+
+interface InterceptorFunction<A extends Action = AnyAction, S = any> {
+  (action? : A, state? : S) : ActionsOrThunks | void;
 }
 
 interface PostConfigure {
@@ -262,7 +266,7 @@ const initSubKeys = (object, subKey, value?) => {
   return object;
 };
 
-const interceptWithHandler = (handler : ActionHolder | Action, store) => {
+const interceptWithHandler = (handler : ActionsOrThunks, store) => {
   if ((handler as Action).type) {
     handler = {
       action: (handler as Action)
@@ -274,7 +278,7 @@ const interceptWithHandler = (handler : ActionHolder | Action, store) => {
 export const interceptor = (func : InterceptorFunction) : Middleware => {
   return (store : MiddlewareAPI) => (next : Dispatch) => (action : any) => {
     next(action);
-    let handler = func(action, store.getState());
+    let handler : ActionsOrThunks | void = func(action, store.getState());
     if (handler) {
       if (Array.isArray(handler)) {
         handler.forEach(handler => interceptWithHandler(handler, store));
