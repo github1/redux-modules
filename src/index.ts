@@ -23,7 +23,7 @@ interface ActionHolder {
   action : ActionOrThunk;
 }
 
-export type ActionsOrThunks = ActionOrThunk | Array<ActionOrThunk> | ActionHolder;
+export type ActionsOrThunks = ActionOrThunk | Array<ActionOrThunk> | ActionHolder | Array<ActionHolder>;
 
 interface InterceptorFunction<A extends Action = AnyAction, S = any> {
   (action? : A, state? : S) : ActionsOrThunks | void;
@@ -62,6 +62,7 @@ export class Module implements ModuleLike {
     const latestActions : Array<AnyAction> = [];
     return Module.fromReducer('recording', (state = {actions: []}, action) => {
       const newState = JSON.parse(JSON.stringify(state));
+      action = JSON.parse(JSON.stringify(action));
       newState.actions.push(action);
       latestActions.push(action);
       newState.containsType = (type) => latestActions.filter(action => action.type === type).length > 0;
