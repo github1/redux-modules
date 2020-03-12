@@ -17,13 +17,17 @@ import {connect} from 'react-redux'
 
 const ROOT_MODULE : string = 'root';
 
-type ActionOrThunk = AnyAction | ((dispatch: Dispatch) => any);
+type ActionOrThunk = AnyAction | ((dispatch : Dispatch) => any);
 
 interface ActionHolder {
   action : ActionOrThunk;
 }
 
-export type ActionsOrThunks = ActionOrThunk | Array<ActionOrThunk> | ActionHolder | Array<ActionHolder>;
+export type ActionsOrThunks =
+  ActionOrThunk
+  | Array<ActionOrThunk>
+  | ActionHolder
+  | Array<ActionHolder>;
 
 interface InterceptorFunction<A extends Action = AnyAction, S = any> {
   (action? : A, state? : S) : ActionsOrThunks | void;
@@ -43,7 +47,16 @@ export interface ModuleLike {
   ___m? : boolean;
 }
 
-export const connectModule = (connect, module : Module, mapStateToProps = (state) => state, actions?: any) => {
+export interface RecordingModuleContext {
+  store: Store;
+  actions : Array<AnyAction>;
+  lastActionTime : number;
+  lastActionAge : number;
+}
+
+export type RecordedActionPredicate = (action : AnyAction) => boolean | string;
+
+export const connectModule = (connect, module : Module, mapStateToProps = (state) => state, actions? : any) => {
   return connect(
     mapStateToProps || ((state) => state),
     dispatch => bindActionCreators(actions || (module as any as { actions : any }).actions, dispatch)
@@ -59,39 +72,65 @@ export class Module implements ModuleLike {
   public _ : any;
 
   static RecordingModule() {
-    const latestActions : Array<AnyAction> = [];
-    return Module.fromReducer('recording', (state = {actions: []}, action) => {
-      const newState = JSON.parse(JSON.stringify(state));
-      action = JSON.parse(JSON.stringify(action));
-      newState.actions.push(action);
-      latestActions.push(action);
-      newState.containsType = (type) => latestActions.filter(action => action.type === type).length > 0;
-      newState.findType = (typeOrFunction, handler?) => {
-        const found = latestActions.filter(action => {
+    //const latestActions : Array<AnyAction> = [];
+    const recordingModuleContext : RecordingModuleContext = {
+      store: null,
+      actions: [],
+      lastActionTime: -1,
+      lastActionAge: -1
+    };
+    const recordingModuleBehaviors = {
+      findType: (typeOrFunction : RecordedActionPredicate, handler?) => {
+        const found = recordingModuleContext.actions.filter(action => {
           return typeof typeOrFunction === 'function' ? typeOrFunction(action) : action.type === typeOrFunction;
         });
         if (handler) {
           handler(found);
         }
         return found;
-      };
-      newState.waitForType = (type, timeout = 1000) : Promise<any> => {
+      },
+      containsType: (typeOrFunction : RecordedActionPredicate) => recordingModuleBehaviors.findType(typeOrFunction).length > 0,
+      waitFor: (predicate : (context? : RecordingModuleContext) => boolean, timeout = 20000) : Promise<any> => {
         return new Promise((resolve, reject) => {
-          const timeoutRef = setTimeout(() => reject(`Exceeded timeout of ${timeout} waiting for ${type}`), timeout);
-          const checkForType = () => {
-            const found = newState.findType(type);
-            if (found.length > 0) {
-              clearTimeout(timeoutRef);
-              resolve(found);
+          const overallTimeout = setTimeout(() => reject(new Error(`Exceeded timeout of ${timeout}`)), timeout);
+          const check = () => {
+            recordingModuleContext.lastActionAge = new Date().getTime() - recordingModuleContext.lastActionTime;
+            if (predicate(recordingModuleContext)) {
+              clearTimeout(overallTimeout);
+              resolve();
             } else {
-              setTimeout(() => checkForType(), 1);
+              setTimeout(() => check(), 500);
             }
           };
-          checkForType();
+          check();
         });
-      };
-      newState.types = newState.actions.map((action, index) => `[${index}] ${action.type}`).join('\n');
-      return newState;
+      },
+      waitForType: (typeOrFunction : RecordedActionPredicate, timeout = 1000) : Promise<any> => {
+        let found = [];
+        return recordingModuleBehaviors.waitFor(() => {
+          found = recordingModuleBehaviors.findType(typeOrFunction);
+          return found.length > 0;
+        }, timeout)
+          .then(() => found);
+      }
+    };
+    return Module.create({
+      name: 'recording',
+      postConfigure: (store) => {
+        recordingModuleContext.store = store;
+      },
+      reducer: (state = {actions: []}, action) => {
+        const newState = JSON.parse(JSON.stringify(state));
+        action = JSON.parse(JSON.stringify(action));
+        recordingModuleContext.lastActionTime = new Date().getTime();
+        newState.actions.push(action);
+        recordingModuleContext.actions.push(action);
+        newState.types = newState.actions.map((action, index) => `[${index}] ${action.type}`).join('\n');
+        return {
+          ...newState,
+          ...recordingModuleBehaviors
+        };
+      }
     });
   }
 
@@ -112,7 +151,7 @@ export class Module implements ModuleLike {
     this.___m = true;
   }
 
-  connect(mapStateToProps?, actions?: any) {
+  connect(mapStateToProps?, actions? : any) {
     return connectModule(connect, this, mapStateToProps, actions);
   }
 
