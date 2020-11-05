@@ -2,7 +2,6 @@ import {
   Action,
   AnyAction,
   applyMiddleware,
-  bindActionCreators,
   combineReducers,
   createStore,
   Dispatch,
@@ -13,7 +12,6 @@ import {
   ReducersMapObject,
   Store
 } from 'redux';
-import {connect} from 'react-redux'
 
 const ROOT_MODULE : string = 'root';
 
@@ -56,20 +54,11 @@ export interface RecordingModuleContext {
 
 export type RecordedActionPredicate = (action : AnyAction) => boolean | string;
 
-export const connectModule = (connect, module : Module, mapStateToProps = (state) => state, actions? : any) => {
-  return connect(
-    mapStateToProps || ((state) => state),
-    dispatch => bindActionCreators(actions || (module as any as { actions : any }).actions, dispatch)
-  );
-};
-
 const handleUndefinedState = state => state === undefined ? {} : state;
 
 export class Module implements ModuleLike {
 
   public ___m : boolean;
-
-  public _ : any;
 
   static RecordingModule() {
     //const latestActions : Array<AnyAction> = [];
@@ -147,12 +136,7 @@ export class Module implements ModuleLike {
     if (this.actions) {
       // nothing
     }
-    this._ = connectModule(connect, this);
     this.___m = true;
-  }
-
-  connect(mapStateToProps?, actions? : any) {
-    return connectModule(connect, this, mapStateToProps, actions);
   }
 
   enforceImmutableState() {

@@ -1,5 +1,4 @@
 import {
-  connectModule,
   interceptor,
   Module
 } from './index';
@@ -219,25 +218,6 @@ describe('when a store is created', () => {
       const store = Module.fromReducer(state => state).inStore({reducer: recordingReducer});
       store.dispatch({type: 'hi'});
       expect(store.getState().root.actions[1].type).toBe('hi');
-    });
-  });
-
-  describe('when connecting modules', () => {
-    it('can return a react-redux connect function', () => {
-      expect(typeof Module.fromReducer(recordingReducer).connect()(() => {
-      })).toBe('function');
-    });
-    it('uses a default mapStateToProps function', () => {
-      const connect = jest.fn();
-      connectModule(connect, Module.fromReducer(recordingReducer));
-      expect(connect.mock.calls[0][0]('a')).toBe('a');
-      expect(connect.mock.calls[0][1]()).toEqual({});
-    });
-    it('can be provided a mapStateToProps function', () => {
-      const connect = jest.fn();
-      connectModule(connect, Module.fromReducer(recordingReducer), () => 'hi');
-      expect(connect.mock.calls[0][0]()).toBe('hi');
-      expect(connect.mock.calls[0][1]()).toEqual({});
     });
   });
 
