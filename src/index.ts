@@ -3,6 +3,7 @@ import {
   AnyAction,
   applyMiddleware,
   combineReducers,
+  compose,
   createStore,
   Dispatch,
   Middleware,
@@ -188,6 +189,10 @@ export class Module implements ModuleLike {
   }
 
   static createStore<S = any, A extends Action = AnyAction>(...modules : any) : Store<S, A> {
+    return Module.createStoreFromModules(false, ...modules);
+  }
+
+  static createStoreFromModules<S = any, A extends Action = AnyAction>(enableReduxDevTools : boolean, ...modules : any) : Store<S, A> {
     modules = modules
       .filter(module => module)
       .map(module => isModuleType(module) ? module : Module.preloadedState(module));
@@ -244,10 +249,14 @@ export class Module implements ModuleLike {
       }
       return preloadedState;
     }, {});
+    let composeEnhancers = compose;
+    if (enableReduxDevTools && typeof window !== 'undefined') {
+      composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ? (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({}) : compose;
+    }
     const store = createStore<S, A, any, any>(
       reducers,
       preloadedState as PreloadedState<S>,
-      applyMiddleware(...middlewares));
+      composeEnhancers(applyMiddleware(...middlewares)));
     modules.forEach(module => {
       if (module.postConfigure) {
         module.postConfigure(store);
@@ -255,7 +264,6 @@ export class Module implements ModuleLike {
     });
     return store;
   }
-
 }
 
 const setTopLevelKeys = (object, dest, subKey?) => {
