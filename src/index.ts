@@ -53,7 +53,7 @@ export interface RecordingModuleContext {
   lastActionAge : number;
 }
 
-export type RecordedActionPredicate = (action : AnyAction) => boolean | string;
+export type RecordedActionPredicate = string | ((action : AnyAction) => boolean);
 
 const handleUndefinedState = state => state === undefined ? {} : state;
 
