@@ -3,5 +3,5 @@ import { ReduxModuleAny } from './redux-module';
 export type ReduxModuleReducer<TReduxModule extends ReduxModuleAny> = (
   state: TReduxModule['_stateType'],
   action: TReduxModule['_actionType'],
-  props: Readonly<TReduxModule['_initializerPropsType']>
+  props: Readonly<TReduxModule['_initializerRequiredPropsType']>
 ) => TReduxModule['_stateType'];

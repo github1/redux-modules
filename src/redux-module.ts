@@ -18,15 +18,15 @@ import { ReduxModuleStoreOptions } from './redux-module-store-options';
 import { ReduxModuleMiddleware } from './redux-module-middleware';
 import { StoreFromOptions } from './store-from-options';
 import { ReduxModuleReducer } from './redux-module-reducer';
-import { $AND, IsAny, LastInTuple, ToTuple } from './utils';
+import { $AND, IsAny, LastInTuple, Optional, ToTuple } from './utils';
 import { ThunkAction } from 'redux-thunk';
 
 /**
  * Provided module props.
  */
-export type ProvidedModuleProps<TInitializer> =
-  | (() => ModuleInitializerPropsType<TInitializer>)
-  | ModuleInitializerPropsType<TInitializer>;
+export type ProvidedModuleProps<TProps> =
+  | (() => Partial<TProps>)
+  | Partial<TProps>;
 
 /**
  * Redux module type container.
@@ -49,7 +49,9 @@ export type ReduxModuleTypeContainer<
   _actionCreatorsInStoreType: StoreStateAtPath<TActionCreators, TPath>;
   _initializerType: TInitializer;
   _initializerPropsType: ModuleInitializerPropsType<TInitializer>;
-  _providedPropsType: ProvidedModuleProps<TInitializer>;
+  _initializerRequiredPropsType: Required<
+    ModuleInitializerPropsType<TInitializer>
+  >;
   _storeStateType: TStoreState;
 };
 
@@ -139,13 +141,18 @@ type ReduxModuleTypeContainerWithActionType<
  * Type of a redux module with the initializer props provided.
  */
 export type ReduxModuleTypeContainerWithInitializationPropsProvided<
-  TReduxModule extends ReduxModuleAny
+  TReduxModule extends ReduxModuleAny,
+  TPropsWhichWereProvided = TReduxModule['_initializerPropsType'],
+  TRemainingProps = Optional<
+    TReduxModule['_initializerPropsType'],
+    keyof TPropsWhichWereProvided
+  >
 > = ReduxModuleTypeContainer<
   TReduxModule['_pathType'],
   TReduxModule['_stateType'],
   TReduxModule['_actionType'],
   TReduxModule['_actionCreatorType'],
-  (props: undefined) => TReduxModule['_initializerPropsType'],
+  (props: TRemainingProps) => TRemainingProps,
   TReduxModule['_storeStateType']
 >;
 
@@ -319,7 +326,7 @@ type InterceptFunctionType<
     Action,
     TReduxModuleTypeContainer['_storeStateType'],
     TReduxModuleTypeContainer['_actionCreatorType'],
-    TReduxModuleTypeContainer['_initializerPropsType']
+    TReduxModuleTypeContainer['_initializerRequiredPropsType']
   >
 > = IsAny<
   TReduxModuleTypeContainer['_pathType'],
@@ -328,7 +335,7 @@ type InterceptFunctionType<
       TReduxModuleTypeContainer['_actionType'],
       TReduxModuleTypeContainer['_storeStateType'],
       TReduxModuleTypeContainer['_actionCreatorType'],
-      TReduxModuleTypeContainer['_initializerPropsType']
+      TReduxModuleTypeContainer['_initializerRequiredPropsType']
     >
   ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
   unknown extends TReduxModuleTypeContainer['_actionType']
@@ -353,7 +360,7 @@ type InterceptFunctionType<
           TReduxModuleTypeContainer['_actionType'],
           TReduxModuleTypeContainer['_storeStateType'],
           TReduxModuleTypeContainer['_actionCreatorType'],
-          TReduxModuleTypeContainer['_initializerPropsType']
+          TReduxModuleTypeContainer['_initializerRequiredPropsType']
         >
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
 >;
@@ -405,11 +412,20 @@ export interface ReduxModule<TReduxModuleTypeContainer extends ReduxModuleAny> {
 export interface ReduxModuleRequiresInitialization<
   TReduxModule extends ReduxModuleAny
 > extends ReduxModule<TReduxModule> {
-  initialize(
-    props: TReduxModule['_providedPropsType']
-  ): ReduxModuleFullyInitialized<
-    ReduxModuleTypeContainerWithInitializationPropsProvided<TReduxModule>
-  >;
+  initialize<
+    TInitializerPropsProvided extends ProvidedModuleProps<
+      TReduxModule['_initializerPropsType']
+    >
+  >(
+    props: TInitializerPropsProvided
+  ): TInitializerPropsProvided extends ProvidedModuleProps<infer TProps>
+    ? ReduxModuleMayRequireInitialization<
+        ReduxModuleTypeContainerWithInitializationPropsProvided<
+          TReduxModule,
+          TProps
+        >
+      >
+    : ReduxModuleMayRequireInitialization<TReduxModule>;
 }
 
 /**

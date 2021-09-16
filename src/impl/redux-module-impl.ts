@@ -24,7 +24,6 @@ import {
   ReduxModuleNameOnly,
   ReduxModuleNameAndInitializerOnly,
   ReduxModuleUnamed,
-  ReduxModuleTypeContainerWithInitializationPropsProvided,
   Interceptor,
 } from '../redux-module';
 import { isAction } from '../is-action';
@@ -247,10 +246,19 @@ class ReduxModuleImplementation<
   }
 
   public initialize(
-    props: ProvidedModuleProps<TInitializer>
-  ): ReduxModuleFullyInitialized<
-    ReduxModuleTypeContainerWithInitializationPropsProvided<TReduxModuleTypeContainer>
-  > {
+    props: ProvidedModuleProps<
+      TReduxModuleTypeContainer['_initializerPropsType']
+    >
+  ) {
+    const existingProvidedProps = this.providedProps;
+    const propsToSet = () => {
+      const existing =
+        (existingProvidedProps instanceof Function
+          ? existingProvidedProps()
+          : existingProvidedProps) || {};
+      const added = (props instanceof Function ? props() : props) || {};
+      return { ...existing, ...added };
+    };
     return new ReduxModuleImplementation(
       this.name,
       this.actions,
@@ -259,9 +267,9 @@ class ReduxModuleImplementation<
       this._preloadedState,
       this.postConfigure,
       this.propsInitializer,
-      props,
+      propsToSet,
       this.combinedModules.slice()
-    );
+    ) as any;
   }
 
   public asStore(options: ReduxModuleStoreOptions<TStoreState> = {}): any {

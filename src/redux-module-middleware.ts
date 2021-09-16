@@ -14,7 +14,7 @@ export interface ReduxModuleMiddleware<
   (
     api: MiddlewareAPI<TDispatch, TStoreStateFinal> & {
       actions: Readonly<TReduxModule['_actionCreatorType']>;
-      props: Readonly<TReduxModule['_initializerPropsType']>;
+      props: Readonly<TReduxModule['_initializerRequiredPropsType']>;
     }
   ): (
     next: Dispatch<AnyAction>

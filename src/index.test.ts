@@ -187,6 +187,35 @@ describe('redux-modules', () => {
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     expectType<'asStore' extends keyof typeof mod ? true : false>(false);
   });
+  it('allows partial initialization', () => {
+    const mod = createModule('test', {
+      initializer(props: { propA: string; propB: string }) {
+        return props;
+      },
+    })
+      .with(
+        createModule('test2', {
+          initializer(props: { propC: string; propD?: string }) {
+            return props;
+          },
+        })
+      )
+      .initialize({ propA: 'a-val' });
+    // should still require initialization
+    expectType<'initialize' extends keyof typeof mod ? true : false>(true);
+    expectType<'asStore' extends keyof typeof mod ? true : false>(false);
+    const mod2 = mod.initialize({ propB: 'b-val', propC: 'c-val' });
+    // only remaining prop is optional, can initialize further or create the store
+    expectType<'initialize' extends keyof typeof mod2 ? true : false>(true);
+    expectType<'asStore' extends keyof typeof mod2 ? true : false>(true);
+    const mod3 = mod2.initialize({ propD: 'd-val' });
+    expect(mod3.asStore().props).toEqual({
+      propA: 'a-val',
+      propB: 'b-val',
+      propC: 'c-val',
+      propD: 'd-val',
+    });
+  });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
       .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
