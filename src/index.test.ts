@@ -168,6 +168,25 @@ describe('redux-modules', () => {
 
     createModule('foo').with(mod);
   });
+  it('combining an uninitialized module with an uninitialized module which has optional props results in an uninitialized module', () => {
+    const mod = createModule('test')
+      .with(
+        createModule('test2', {
+          initializer(props: { test2Prop: string }) {
+            return props;
+          },
+        })
+      )
+      .with(
+        createModule('test3', {
+          initializer(props: { test3Prop?: string }) {
+            return props;
+          },
+        })
+      );
+    expectType<'initialize' extends keyof typeof mod ? true : false>(true);
+    expectType<'asStore' extends keyof typeof mod ? true : false>(false);
+  });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
       .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
@@ -618,5 +637,62 @@ describe('redux-modules', () => {
     expectType<TypeOf<TestFunArg0, typeof mod>>(true);
     const funArg0: TestFunArg0 = mod;
     expect(funArg0).toBeDefined();
+  });
+  it('can define interceptor middlewares', async () => {
+    const store = createModule('test', {
+      initializer(props: { something?: string }) {
+        return props;
+      },
+      actionCreators: {
+        doSomething(): ActionTypes {
+          return { type: 'SOME_ACTION' };
+        },
+        doSomethingElse(): ActionTypes {
+          return { type: 'ANOTHER_ACTION' };
+        },
+      },
+    })
+      .preloadedState({
+        actionTypes: [],
+      } as StateType)
+      .intercept((action, { actions, state, props }) => {
+        expectType<ActionTypes>(action);
+        expectType<{ test: StateType }>(state);
+        expectType<{ something?: string }>(props);
+        if (action.type === 'SOME_ACTION') {
+          return (dispatch) => {
+            dispatch({ ...actions.doSomethingElse(), source: 'from-thunk' });
+          };
+        }
+      })
+      .intercept((action, { actions }) => {
+        if (action.type === 'SOME_ACTION') {
+          return [{ ...actions.doSomethingElse(), source: 'from-array' }];
+        }
+      })
+      .intercept((action, { actions }) => {
+        if (action.type === 'SOME_ACTION') {
+          return { ...actions.doSomethingElse(), source: 'from-single' };
+        }
+      })
+      .asStore({ record: true });
+    store.dispatch(store.actions.test.doSomething());
+    expect(
+      store
+        .getState()
+        .recording.contains((action) => (action as any).source === 'from-thunk')
+    ).toBeTruthy();
+    expect(
+      store
+        .getState()
+        .recording.contains((action) => (action as any).source === 'from-array')
+    ).toBeTruthy();
+    expect(
+      store
+        .getState()
+        .recording.contains(
+          (action) => (action as any).source === 'from-single'
+        )
+    ).toBeTruthy();
   });
 });

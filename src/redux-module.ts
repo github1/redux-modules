@@ -19,6 +19,7 @@ import { ReduxModuleMiddleware } from './redux-module-middleware';
 import { StoreFromOptions } from './store-from-options';
 import { ReduxModuleReducer } from './redux-module-reducer';
 import { $AND, IsAny, LastInTuple, ToTuple } from './utils';
+import { ThunkAction } from 'redux-thunk';
 
 /**
  * Provided module props.
@@ -302,16 +303,73 @@ type OnFunctionType<TReduxModuleTypeContainer extends ReduxModuleAny> = IsAny<
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
 >;
 
+export type Interceptor<
+  TAction extends Action,
+  TStoreState,
+  TActionCreators,
+  TProps
+> = (
+  action: TAction,
+  context: { state: TStoreState; actions: TActionCreators; props: TProps }
+) => void | TAction | TAction[] | ThunkAction<any, TStoreState, any, TAction>;
+
+type InterceptFunctionType<
+  TReduxModuleTypeContainer extends ReduxModuleAny,
+  TInterceptor extends Interceptor<Action, any, any, any> = Interceptor<
+    Action,
+    TReduxModuleTypeContainer['_storeStateType'],
+    TReduxModuleTypeContainer['_actionCreatorType'],
+    TReduxModuleTypeContainer['_initializerPropsType']
+  >
+> = IsAny<
+  TReduxModuleTypeContainer['_pathType'],
+  (
+    interceptor: Interceptor<
+      TReduxModuleTypeContainer['_actionType'],
+      TReduxModuleTypeContainer['_storeStateType'],
+      TReduxModuleTypeContainer['_actionCreatorType'],
+      TReduxModuleTypeContainer['_initializerPropsType']
+    >
+  ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
+  unknown extends TReduxModuleTypeContainer['_actionType']
+    ? (interceptor: TInterceptor) => TInterceptor extends Interceptor<
+        infer TInterceptorAction,
+        any,
+        any,
+        any
+      >
+        ? // infer TAction from TInterceptor
+          ReduxModuleMayRequireInitialization<
+            ReduxModuleTypeContainerWithActionType<
+              TReduxModuleTypeContainer,
+              TInterceptorAction
+            >
+          >
+        : // not a Interceptor
+          never
+    : // confirm TInterceptor to
+      (
+        interceptor: Interceptor<
+          TReduxModuleTypeContainer['_actionType'],
+          TReduxModuleTypeContainer['_storeStateType'],
+          TReduxModuleTypeContainer['_actionCreatorType'],
+          TReduxModuleTypeContainer['_initializerPropsType']
+        >
+      ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
+>;
+
 export interface ReduxModule<TReduxModuleTypeContainer extends ReduxModuleAny> {
   readonly _types: TReduxModuleTypeContainer;
   readonly path: TReduxModuleTypeContainer['_pathType'];
   readonly name: TReduxModuleTypeContainer['_nameType'];
+  readonly actions: TReduxModuleTypeContainer['_actionCreatorType'];
   configure(
     configure: PostConfigure<TReduxModuleTypeContainer>
   ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
   preloadedState: PreloadedStateFunctionType<TReduxModuleTypeContainer>;
   reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
   on: OnFunctionType<TReduxModuleTypeContainer>;
+  intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
   with<
     OtherModule extends ReduxModuleRequiresInitializationOrFullyInitialized<any>
   >(
@@ -339,7 +397,6 @@ export interface ReduxModule<TReduxModuleTypeContainer extends ReduxModuleAny> {
         >
       : never
     : never;
-  actions: TReduxModuleTypeContainer['_actionCreatorType'];
 }
 
 /**

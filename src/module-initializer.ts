@@ -20,8 +20,9 @@ export type ModuleInitializer<
   TProps extends TPropsInput = TPropsInput
 > = ((props: TPropsInput) => TProps) | undefined;
 
-// TypeOf<ModuleInitializerPropsType<TInitializer>, {}>
-
+/**
+ * Checks if the initializer has required props.
+ */
 export type ModuleInitializerRequiresProps<TInitializer, TYes, TNo> =
   TInitializer extends (...args: any) => any
     ? true extends $OR<
@@ -37,23 +38,39 @@ export type ModuleInitializerRequiresProps<TInitializer, TYes, TNo> =
       : TYes
     : TNo;
 
-export type ModuleInitializerCombined<TInitializerA, TInitializerB> =
-  true extends $AND<
-    ModuleInitializerRequiresProps<TInitializerA, true, false>,
-    ModuleInitializerRequiresProps<TInitializerB, true, false>
-  >
-    ? ModuleInitializer<
-        ModuleInitializerPropsType<TInitializerA> &
-          ModuleInitializerPropsType<TInitializerB>
+/**
+ * Checks if the initializer has any props, including optional props.
+ */
+export type ModuleInitializerHasProps<TInitializer, TYes, TNo> =
+  TInitializer extends (...args: any) => any
+    ? true extends $OR<
+        TypeEqual<TInitializer, undefined>,
+        $OR<
+          TypeEqual<unknown, TInitializer>,
+          TypeEqual<FirstParameterActual<TInitializer>, undefined>
+        >
       >
-    : true extends $AND<
-        ModuleInitializerRequiresProps<TInitializerA, true, false>,
-        ModuleInitializerRequiresProps<TInitializerB, false, true>
-      >
-    ? TInitializerA
-    : true extends $AND<
-        ModuleInitializerRequiresProps<TInitializerA, false, true>,
-        ModuleInitializerRequiresProps<TInitializerB, true, false>
-      >
-    ? TInitializerB
-    : undefined;
+      ? TNo
+      : true extends TypeOf<ModuleInitializerPropsType<TInitializer>, {}>
+      ? TYes & TNo
+      : TYes
+    : TNo;
+
+export type ModuleInitializerCombined<
+  TInitializerA,
+  TInitializerB,
+  TARequiresProps = ModuleInitializerRequiresProps<TInitializerA, true, false>,
+  TBRequiresProps = ModuleInitializerRequiresProps<TInitializerB, true, false>
+> = true extends $OR<
+  $AND<TARequiresProps, TBRequiresProps>,
+  TypeEqual<true & false, TARequiresProps | TBRequiresProps>
+>
+  ? ModuleInitializer<
+      ModuleInitializerPropsType<TInitializerA> &
+        ModuleInitializerPropsType<TInitializerB>
+    >
+  : true extends TARequiresProps
+  ? TInitializerA
+  : true extends TBRequiresProps
+  ? TInitializerB
+  : undefined;

@@ -25,6 +25,7 @@ import {
   ReduxModuleNameAndInitializerOnly,
   ReduxModuleUnamed,
   ReduxModuleTypeContainerWithInitializationPropsProvided,
+  Interceptor,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -202,6 +203,22 @@ class ReduxModuleImplementation<
       this.providedProps,
       this.combinedModules.slice()
     ) as any;
+  }
+
+  public intercept(interceptor: Interceptor<any, any, any, any>) {
+    return this.on((store) => (next) => (action) => {
+      next(action);
+      const result = interceptor(action, {
+        actions: store.actions,
+        state: store.getState(),
+        props: store.props,
+      });
+      if (result) {
+        (Array.isArray(result) ? result : [result])
+          .filter((item) => item)
+          .forEach((action) => store.dispatch(action));
+      }
+    });
   }
 
   public with(module: ReduxModule<any>) {
