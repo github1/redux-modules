@@ -255,12 +255,15 @@ class ReduxModuleImplementation<
     >
   ) {
     const existingProvidedProps = this.providedProps;
-    const propsToSet = () => {
+    const propsToSet: ProvidedModuleProps<
+      TReduxModuleTypeContainer,
+      TReduxModuleTypeContainer['_initializerPropsType']
+    > = (context) => {
       const existing =
         (existingProvidedProps instanceof Function
-          ? existingProvidedProps()
+          ? existingProvidedProps(context)
           : existingProvidedProps) || {};
-      const added = (props instanceof Function ? props() : props) || {};
+      const added = (props instanceof Function ? props(context) : props) || {};
       return { ...existing, ...added };
     };
     return new ReduxModuleImplementation(
@@ -278,10 +281,11 @@ class ReduxModuleImplementation<
 
   public asStore(options: ReduxModuleStoreOptions<TStoreState> = {}): any {
     const storeFactory = (): ReduxModuleStore<TReduxModuleTypeContainer> => {
+      const providedPropsContext = { actions: this.actions };
       const initializedProps = Object.freeze(
         this.propsInitializer(
           (this.providedProps instanceof Function
-            ? this.providedProps()
+            ? this.providedProps(providedPropsContext)
             : this.providedProps) || {}
         )
       );

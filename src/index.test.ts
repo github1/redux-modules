@@ -216,6 +216,29 @@ describe('redux-modules', () => {
       propD: 'd-val',
     });
   });
+  it('can initialize props with a function', () => {
+    expect(
+      createModule('test', {
+        initializer(props: { something: string }) {
+          return props;
+        },
+        actionCreators: {
+          doSomething(): ActionTypes {
+            return { type: 'SOME_ACTION' };
+          },
+        },
+      })
+        .initialize(({ actions }) => {
+          expectType<
+            TypeEqual<typeof actions, { doSomething: () => ActionTypes }>
+          >(true);
+          return {
+            something: actions.doSomething().type,
+          };
+        })
+        .asStore().props.something
+    ).toEqual('SOME_ACTION');
+  });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
       .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
