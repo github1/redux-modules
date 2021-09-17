@@ -22,13 +22,6 @@ import { $AND, IsAny, LastInTuple, Optional, ToTuple } from './utils';
 import { ThunkAction } from 'redux-thunk';
 
 /**
- * Provided module props.
- */
-export type ProvidedModuleProps<TProps> =
-  | (() => Partial<TProps>)
-  | Partial<TProps>;
-
-/**
  * Redux module type container.
  */
 export type ReduxModuleTypeContainer<
@@ -407,25 +400,44 @@ export interface ReduxModule<TReduxModuleTypeContainer extends ReduxModuleAny> {
 }
 
 /**
+ * Types for initialize method
+ */
+
+/**
+ * T is the provided type
+ * K is the type which T must only have keys of
+ */
+type MustOnlyHaveKeys<T, K> = {} extends Omit<T, keyof K> ? Partial<T> : K;
+
+/**
+ * Provided module props.
+ */
+export type ProvidedModuleProps<
+  TReduxModuleTypeContainer extends ReduxModuleAny,
+  TProps = any
+> =
+  | ((context?: {
+      actions: TReduxModuleTypeContainer['_actionCreatorType'];
+    }) => TProps)
+  | TProps;
+
+/**
  * Interface for a redux module which requires initialization before it can be made into a store.
  */
 export interface ReduxModuleRequiresInitialization<
   TReduxModule extends ReduxModuleAny
 > extends ReduxModule<TReduxModule> {
-  initialize<
-    TInitializerPropsProvided extends ProvidedModuleProps<
-      TReduxModule['_initializerPropsType']
+  initialize<TProps>(
+    props: ProvidedModuleProps<
+      TReduxModule,
+      MustOnlyHaveKeys<TProps, TReduxModule['_initializerPropsType']>
     >
-  >(
-    props: TInitializerPropsProvided
-  ): TInitializerPropsProvided extends ProvidedModuleProps<infer TProps>
-    ? ReduxModuleMayRequireInitialization<
-        ReduxModuleTypeContainerWithInitializationPropsProvided<
-          TReduxModule,
-          TProps
-        >
-      >
-    : ReduxModuleMayRequireInitialization<TReduxModule>;
+  ): ReduxModuleMayRequireInitialization<
+    ReduxModuleTypeContainerWithInitializationPropsProvided<
+      TReduxModule,
+      TProps
+    >
+  >;
 }
 
 /**

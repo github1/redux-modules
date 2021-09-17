@@ -87,7 +87,10 @@ class ReduxModuleImplementation<
     private _preloadedState: any,
     private postConfigure: PostConfigure<TReduxModuleTypeContainer>,
     private propsInitializer: (inProps: any) => any,
-    private providedProps: ProvidedModuleProps<TInitializer>,
+    private providedProps: ProvidedModuleProps<
+      TReduxModuleTypeContainer,
+      TReduxModuleTypeContainer['_initializerPropsType']
+    >,
     combinedModules: ReduxModule<any>[]
   ) {
     if (!Object.isFrozen(actions)) {
@@ -247,6 +250,7 @@ class ReduxModuleImplementation<
 
   public initialize(
     props: ProvidedModuleProps<
+      TReduxModuleTypeContainer,
       TReduxModuleTypeContainer['_initializerPropsType']
     >
   ) {
