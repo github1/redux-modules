@@ -47,7 +47,8 @@ import { ReduxModuleReducer } from '../redux-module-reducer';
  * Factory function interface for middlewares which accept props.
  */
 type MiddlewareFactory<TStoreState, TAction extends Action> = (
-  props: any
+  props: any,
+  actions: any
 ) => Middleware<{}, TStoreState, ThunkDispatch<TStoreState, any, TAction>>[];
 
 function runReducer(
@@ -178,7 +179,8 @@ class ReduxModuleImplementation<
     const currentMiddlewareFactory: MiddlewareFactory<TStoreState, TAction> =
       this.middlewareFactory || (() => []);
     const newMiddlewareFactory: MiddlewareFactory<TStoreState, TAction> = (
-      props: any
+      props: any,
+      actions: any
     ) => {
       const wrapped: Middleware = (store) => (next) => (action) => {
         const middlewareApiWithActions: MiddlewareAPI & {
@@ -187,12 +189,12 @@ class ReduxModuleImplementation<
         } = {
           dispatch: store.dispatch,
           getState: store.getState,
-          actions: this.actions,
+          actions,
           props,
         };
         handler(middlewareApiWithActions)(next)(action);
       };
-      return [...currentMiddlewareFactory(props), wrapped];
+      return [...currentMiddlewareFactory(props, actions), wrapped];
     };
     return new ReduxModuleImplementation(
       this.name,
@@ -281,7 +283,18 @@ class ReduxModuleImplementation<
 
   public asStore(options: ReduxModuleStoreOptions<TStoreState> = {}): any {
     const storeFactory = (): ReduxModuleStore<TReduxModuleTypeContainer> => {
-      const providedPropsContext = { actions: this.actions };
+      const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
+        [this, ...(this.combinedModules as any)];
+
+      const actionCreators = Object.freeze(
+        modules.reduce((creators, module) => {
+          return { ...creators, ...wrapInPath(module.actions, module.path) };
+        }, {})
+      );
+
+      const providedPropsContext = {
+        actions: Object.freeze({ ...actionCreators, ...this.actions }),
+      };
       const initializedProps = Object.freeze(
         this.propsInitializer(
           (this.providedProps instanceof Function
@@ -290,8 +303,6 @@ class ReduxModuleImplementation<
         )
       );
 
-      const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
-        [this, ...(this.combinedModules as any)];
       if (options.record) {
         modules.unshift(
           createModule('recording')
@@ -384,7 +395,13 @@ class ReduxModuleImplementation<
             // need to pass props here, because they have not been initialized when the middleware is defined
             middlewares.push(
               ...(module
-                .middlewareFactory(initializedProps)
+                .middlewareFactory(
+                  initializedProps,
+                  Object.freeze({
+                    ...actionCreators,
+                    ...module.actions,
+                  })
+                )
                 .map((moduleMiddleware) => {
                   return moduleMiddleware;
                 }) as any)
@@ -419,9 +436,7 @@ class ReduxModuleImplementation<
         composeEnhancers(applyMiddleware(...middlewares))
       );
       // expose action creators from all of the modules on the store
-      (store as any).actions = modules.reduce((creators, module) => {
-        return { ...creators, ...wrapInPath(module.actions, module.path) };
-      }, {});
+      (store as any).actions = actionCreators;
       (store as any).props = initializedProps;
 
       // run post configure functions

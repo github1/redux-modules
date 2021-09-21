@@ -31,6 +31,8 @@ export type ReduxModuleTypeContainer<
   TActionCreators,
   TInitializer extends ModuleInitializer<any, any>,
   TStoreState = StoreStateAtPath<TState, TPath>,
+  TStoreActionCreators = StoreStateAtPath<TActionCreators, TPath> &
+    TActionCreators,
   TPathParts extends string[] = ToTuple<TPath, '.' | '/' | '->'>
 > = {
   _pathType: TPath;
@@ -39,19 +41,20 @@ export type ReduxModuleTypeContainer<
   _stateType: TState;
   _actionType: TAction;
   _actionCreatorType: TActionCreators;
-  _actionCreatorsInStoreType: StoreStateAtPath<TActionCreators, TPath>;
   _initializerType: TInitializer;
   _initializerPropsType: ModuleInitializerPropsType<TInitializer>;
   _initializerRequiredPropsType: Required<
     ModuleInitializerPropsType<TInitializer>
   >;
   _storeStateType: TStoreState;
+  _storeActionCreatorsType: TStoreActionCreators;
 };
 
 /**
  * Type of any redux module type container.
  */
 export type ReduxModuleAny = ReduxModuleTypeContainer<
+  any,
   any,
   any,
   any,
@@ -67,6 +70,7 @@ export type ReduxModuleUnamed = ReduxModuleTypeContainer<
   unknown,
   unknown,
   undefined,
+  unknown,
   unknown
 >;
 
@@ -77,6 +81,7 @@ export type ReduxModuleNameOnly<TPath extends string> =
     unknown,
     unknown,
     undefined,
+    unknown,
     unknown
   >;
 
@@ -89,6 +94,7 @@ export type ReduxModuleNameAndInitializerOnly<
   unknown,
   unknown,
   TInitializer,
+  unknown,
   unknown
 >;
 
@@ -112,7 +118,8 @@ type ReduxModuleTypeContainerWithStateType<
   TReduxModule['_actionType'],
   TReduxModule['_actionCreatorType'],
   TReduxModule['_initializerType'],
-  TNewStoreState
+  TNewStoreState,
+  TReduxModule['_storeActionCreatorsType']
 >;
 
 /**
@@ -127,7 +134,8 @@ type ReduxModuleTypeContainerWithActionType<
   TAction,
   TReduxModule['_actionCreatorType'],
   TReduxModule['_initializerType'],
-  TReduxModule['_storeStateType']
+  TReduxModule['_storeStateType'],
+  TReduxModule['_storeActionCreatorsType']
 >;
 
 /**
@@ -146,7 +154,8 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
   TReduxModule['_actionType'],
   TReduxModule['_actionCreatorType'],
   (props: TRemainingProps) => TRemainingProps,
-  TReduxModule['_storeStateType']
+  TReduxModule['_storeStateType'],
+  TReduxModule['_storeActionCreatorsType']
 >;
 
 /**
@@ -318,7 +327,7 @@ type InterceptFunctionType<
   TInterceptor extends Interceptor<Action, any, any, any> = Interceptor<
     Action,
     TReduxModuleTypeContainer['_storeStateType'],
-    TReduxModuleTypeContainer['_actionCreatorType'],
+    TReduxModuleTypeContainer['_storeActionCreatorsType'],
     TReduxModuleTypeContainer['_initializerRequiredPropsType']
   >
 > = IsAny<
@@ -327,7 +336,7 @@ type InterceptFunctionType<
     interceptor: Interceptor<
       TReduxModuleTypeContainer['_actionType'],
       TReduxModuleTypeContainer['_storeStateType'],
-      TReduxModuleTypeContainer['_actionCreatorType'],
+      TReduxModuleTypeContainer['_storeActionCreatorsType'],
       TReduxModuleTypeContainer['_initializerRequiredPropsType']
     >
   ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
@@ -352,7 +361,7 @@ type InterceptFunctionType<
         interceptor: Interceptor<
           TReduxModuleTypeContainer['_actionType'],
           TReduxModuleTypeContainer['_storeStateType'],
-          TReduxModuleTypeContainer['_actionCreatorType'],
+          TReduxModuleTypeContainer['_storeActionCreatorsType'],
           TReduxModuleTypeContainer['_initializerRequiredPropsType']
         >
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
@@ -392,7 +401,9 @@ export interface ReduxModule<TReduxModuleTypeContainer extends ReduxModuleAny> {
               TWReduxModule['_initializerType']
             >,
             TReduxModuleTypeContainer['_storeStateType'] &
-              TWReduxModule['_storeStateType']
+              TWReduxModule['_storeStateType'],
+            TReduxModuleTypeContainer['_storeActionCreatorsType'] &
+              TWReduxModule['_storeActionCreatorsType']
           >
         >
       : never
@@ -417,7 +428,7 @@ export type ProvidedModuleProps<
   TProps = any
 > =
   | ((context?: {
-      actions: TReduxModuleTypeContainer['_actionCreatorType'];
+      actions: TReduxModuleTypeContainer['_storeActionCreatorsType'];
     }) => TProps)
   | TProps;
 

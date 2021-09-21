@@ -21,7 +21,8 @@ export type StoreFromOptions<
     TReduxModule['_actionType'],
     TReduxModule['_actionCreatorType'],
     TReduxModule['_initializerType'],
-    TStoreStateFinal
+    TStoreStateFinal,
+    TReduxModule['_storeActionCreatorsType']
   >
 > = (TReduxModuleStoreOptions['deferred'] extends true
   ? ReloadableStore<TReduxModuleFinal>

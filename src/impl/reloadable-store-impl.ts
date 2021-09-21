@@ -7,7 +7,7 @@ import { RestrictToAction } from '../type-helpers';
 export class ReloadableStoreImpl<
   TReduxModule extends ReduxModuleAny,
   TAction extends Action | never = TReduxModule['_actionType'],
-  TActionCreatorsInStore = TReduxModule['_actionCreatorsInStoreType'],
+  TActionCreatorsInStore = TReduxModule['_storeActionCreatorsType'],
   TInitializerPropTypes = TReduxModule['_initializerRequiredPropsType'],
   TStoreState = TReduxModule['_storeStateType']
 > implements ReloadableStore<TReduxModule>

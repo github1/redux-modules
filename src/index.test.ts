@@ -54,7 +54,9 @@ describe('redux-modules', () => {
             StateType,
             ActionTypes,
             unknown,
-            undefined
+            undefined,
+            unknown,
+            unknown
           >
         >,
         typeof mod
@@ -155,6 +157,7 @@ describe('redux-modules', () => {
         return opts;
       },
     }).reduce((state, action, props) => {
+      expect(action).toBeDefined();
       return { ...state, something: props.id };
     });
     // it can still initialize
@@ -165,8 +168,6 @@ describe('redux-modules', () => {
       mod.initialize({ id: 'override' }).asStore().getState().test.something
     ).toBe('override');
     expect(mod.asStore().getState().test.something).toBe('this-is-the-default');
-
-    createModule('foo').with(mod);
   });
   it('combining an uninitialized module with an uninitialized module which has optional props results in an uninitialized module', () => {
     const mod = createModule('test')
@@ -230,10 +231,15 @@ describe('redux-modules', () => {
       })
         .initialize(({ actions }) => {
           expectType<
-            TypeEqual<typeof actions, { doSomething: () => ActionTypes }>
+            TypeEqual<
+              typeof actions,
+              { test: { doSomething: () => ActionTypes } } & {
+                doSomething: () => ActionTypes;
+              }
+            >
           >(true);
           return {
-            something: actions.doSomething().type,
+            something: actions.test.doSomething().type,
           };
         })
         .asStore().props.something
@@ -355,21 +361,30 @@ describe('redux-modules', () => {
       });
   });
   it('can be made into a store', () => {
-    const mod1 = createModule('test')
-      .reduce((state: StateType, action: ActionTypes) => {
+    const mod = createModule('test', {
+      actionCreators: {
+        doSomething(): { type: 'DO_SOMETHING' } {
+          return { type: 'DO_SOMETHING' };
+        },
+      },
+    })
+      .reduce((state: StateType, action) => {
         return { ...state, actionTypes: [...state.actionTypes, action.type] };
       })
-      .preloadedState({ actionTypes: [] });
-    const mod = mod1
+      .preloadedState({ actionTypes: [] })
       .with(
-        createModule('test2').reduce(
-          (
-            state: { actionTypeLength: number },
-            action: { type: 'TEST2_ACTION'; something?: number }
-          ) => {
-            return { ...state, actionTypeLength: action.type.length };
-          }
-        )
+        createModule('test2', {
+          actionCreators: {
+            doSomeAction(): { type: 'SOME_ACTION' } {
+              return { type: 'SOME_ACTION' };
+            },
+            doTest2Action(): { type: 'TEST2_ACTION'; something?: number } {
+              return { type: 'TEST2_ACTION', something: 12 };
+            },
+          },
+        }).reduce((state: { actionTypeLength: number }, action) => {
+          return { ...state, actionTypeLength: action.type.length };
+        })
       )
       .on('SOME_*ION', () => (next) => (action) => {
         expectType<TypeEqual<typeof action, { type: 'SOME_ACTION' }>>(true);
@@ -384,12 +399,21 @@ describe('redux-modules', () => {
       >
     >(true);
     expectType<
-      TypeOf<
+      TypeEqual<
         ActionTypeFromDispatch<typeof store.dispatch>,
-        ActionTypes | { type: 'TEST2_ACTION'; something?: number }
+        | {
+            type: 'DO_SOMETHING';
+          }
+        | {
+            type: 'SOME_ACTION';
+          }
+        | {
+            type: 'TEST2_ACTION';
+            something?: number;
+          }
       >
     >(true);
-    store.dispatch({ type: 'SOME_ACTION' });
+    store.dispatch(store.actions.test2.doSomeAction());
     expect(store.getState().test.actionTypes).toEqual(
       expect.arrayContaining(['SOME_ACTION_from_middleware'])
     );
@@ -713,18 +737,21 @@ describe('redux-modules', () => {
         expectType<{ something?: string }>(props);
         if (action.type === 'SOME_ACTION') {
           return (dispatch) => {
-            dispatch({ ...actions.doSomethingElse(), source: 'from-thunk' });
+            dispatch({
+              ...actions.test.doSomethingElse(),
+              source: 'from-thunk',
+            });
           };
         }
       })
       .intercept((action, { actions }) => {
         if (action.type === 'SOME_ACTION') {
-          return [{ ...actions.doSomethingElse(), source: 'from-array' }];
+          return [{ ...actions.test.doSomethingElse(), source: 'from-array' }];
         }
       })
       .intercept((action, { actions }) => {
         if (action.type === 'SOME_ACTION') {
-          return { ...actions.doSomethingElse(), source: 'from-single' };
+          return { ...actions.test.doSomethingElse(), source: 'from-single' };
         }
       })
       .asStore({ record: true });

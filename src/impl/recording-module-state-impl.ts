@@ -16,6 +16,8 @@ export function RecordingModuleMiddleware<
     RecordingModuleState<TAction>,
     TAction,
     any,
+    any,
+    any,
     any
   >
 > {
