@@ -193,6 +193,40 @@ export type ReduxModuleTypeContainerWithAction<
       TReduxModuleTypeContainer['_initializerPropsType']
     >;
 
+export type ReduxModuleTypeContainerWithActionMatchingSubstring<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TSubString extends string
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
+  infer TReduxModuleTypeContainerCompositePrimary,
+  infer TReduxModuleTypeContainerCompositeMembers
+>
+  ? ReduxModuleTypeContainerComposite<
+      ReduxModuleTypeContainerWithAction<
+        TReduxModuleTypeContainerCompositePrimary,
+        ActionTypeContainsSubstring<
+          TReduxModuleTypeContainerCompositePrimary['_actionType'],
+          TSubString
+        >
+      >,
+      ReduxModuleTypeContainerWithAction<
+        TReduxModuleTypeContainerCompositeMembers,
+        ActionTypeContainsSubstring<
+          TReduxModuleTypeContainerCompositeMembers['_actionType'],
+          TSubString
+        >
+      >
+    >
+  : ReduxModuleTypeContainer<
+      TReduxModuleTypeContainer['_pathType'],
+      TReduxModuleTypeContainer['_stateType'],
+      ActionTypeContainsSubstring<
+        TReduxModuleTypeContainer['_actionType'],
+        TSubString
+      >,
+      TReduxModuleTypeContainer['_actionCreatorType'],
+      TReduxModuleTypeContainer['_initializerPropsType']
+    >;
+
 export type ReduxModuleTypeContainerWithActionCreator<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TActionCreator extends Record<
@@ -456,22 +490,69 @@ type OnFunctionType<
         TActionTypeOrMiddleware extends
           | ReduxModuleMiddleware<TReduxModuleTypeContainer>
           | string,
-        TExpectedAction extends ActionTypeContainsSubstring<
-          RestrictToAction<TReduxModuleTypeContainer['_actionType']>,
-          TActionTypeOrMiddleware extends string
-            ? TActionTypeOrMiddleware
-            : never
+        TReduxModuleMiddleware extends ReduxModuleMiddleware<
+          ReduxModuleTypeContainerWithActionMatchingSubstring<
+            TReduxModuleTypeContainer,
+            TActionTypeOrMiddleware extends string
+              ? TActionTypeOrMiddleware
+              : never
+          >
         >
       >(
         type: TActionTypeOrMiddleware,
-        handler?: ReduxModuleMiddleware<
-          ReduxModuleTypeContainerWithAction<
-            TReduxModuleTypeContainer,
-            TExpectedAction
-          >
-        >
+        handler?: TReduxModuleMiddleware
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
 >;
+
+// type OnFunctionType<
+//   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+// > = IsAny<
+//   TReduxModuleTypeContainer['_pathType'],
+//   (
+//     typeOrHandler: ReduxModuleMiddleware<TReduxModuleTypeContainer> | string,
+//     handler?: ReduxModuleMiddleware<TReduxModuleTypeContainer>
+//   ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
+//   true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+//     ? // infer TAction from TMiddleware
+//       <
+//         TMiddleware extends ReduxModuleMiddleware<
+//           ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
+//         >,
+//         TActionTypeOrMiddleware extends TMiddleware | string,
+//         TActionFromMiddleware extends Action = RestrictToAction<
+//           TActionTypeOrMiddleware extends (
+//             ...store: any
+//           ) => (...next: any) => (action: infer TMiddlewareActionType) => void
+//             ? TMiddlewareActionType
+//             : TReduxModuleTypeContainer['_actionType']
+//         >
+//       >(
+//         typeOrHandler: TActionTypeOrMiddleware,
+//         handler?: TMiddleware
+//       ) => ReduxModuleMayRequireInitialization<
+//         ReduxModuleTypeContainerWithAction<
+//           TReduxModuleTypeContainer,
+//           TActionFromMiddleware
+//         >
+//       >
+//     : // TMiddleware should conform to TAction
+//       <
+//         TActionTypeOrMiddleware extends
+//           | ReduxModuleMiddleware<TReduxModuleTypeContainer>
+//           | string,
+//         TReduxModuleMiddleware extends ReduxModuleMiddleware<
+//           ReduxModuleTypeContainerWithActionMatchingSubstring<
+//             TReduxModuleTypeContainer,
+//             TActionTypeOrMiddleware extends string
+//               ? TActionTypeOrMiddleware
+//               : 'as'
+//           >
+//         >
+//       >(
+//         type: TActionTypeOrMiddleware,
+//         handler?: TReduxModuleMiddleware
+//       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
+// >;
 
 export type Interceptor<
   TAction extends Action,
