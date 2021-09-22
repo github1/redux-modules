@@ -13,7 +13,7 @@ export interface ReduxModuleMiddleware<
 > {
   (
     api: MiddlewareAPI<TDispatch, TStoreStateFinal> & {
-      actions: Readonly<TReduxModule['_storeActionCreatorsType']>;
+      actions: Readonly<TReduxModule['_storeActionCreatorsWithLocalType']>;
       props: Readonly<TReduxModule['_initializerRequiredPropsType']>;
     }
   ): (

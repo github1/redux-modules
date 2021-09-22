@@ -14,18 +14,19 @@ import { wrapInPath, mergeDeep } from '../utils';
 import thunk, { ThunkDispatch } from 'redux-thunk';
 import { ReloadableStoreImpl } from './reloadable-store-impl';
 import {
-  ReduxModuleTypeContainerComposite,
   ReduxModule,
   ReduxModuleRequiresInitialization,
   ReduxModuleFullyInitialized,
   ReduxModuleMayRequireInitialization,
   ProvidedModuleProps,
-  ReduxModuleTypeContainer,
   ReduxModuleTypeContainerNameOnly,
-  ReduxModuleTypeContainerNameAndInitializerOnly,
+  ReduxModuleTypeContainerNameAndPropsOnly,
   ReduxModuleTypeContainerUnamed,
   Interceptor,
   ReduxModuleTypeContainerCompositeAny,
+  ReduxModuleTypeContainerWithAction,
+  ReduxModuleTypeContainerWithActionCreator,
+  ReduxModuleTypeContainerWithProps,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -71,7 +72,7 @@ class ReduxModuleImplementation<
   TName extends string = TReduxModuleTypeContainer['_nameType'],
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
-  TInitializer = TReduxModuleTypeContainer['_initializerType'],
+  TProps = TReduxModuleTypeContainer['_initializerPropsType'],
   TStoreState = TReduxModuleTypeContainer['_storeStateType']
 > implements
     ReduxModule<TReduxModuleTypeContainer>,
@@ -186,7 +187,7 @@ class ReduxModuleImplementation<
       const wrapped: Middleware = (store) => (next) => (action) => {
         const middlewareApiWithActions: MiddlewareAPI & {
           actions: TActionCreators;
-          props: ModuleInitializerPropsType<TInitializer>;
+          props: TProps;
         } = {
           dispatch: store.dispatch,
           getState: store.getState,
@@ -469,7 +470,8 @@ export function createModule<
   TPath extends string,
   TInitializer extends ModuleInitializer<any>,
   TActionCreators extends Record<string, (...args: any) => Action>,
-  TActionFromActionCreators extends Action = ActionFromActionCreators<TActionCreators>
+  TActionFromActionCreators extends Action = ActionFromActionCreators<TActionCreators>,
+  TProps = ModuleInitializerPropsType<TInitializer>
 >(
   name: TPath,
   options: {
@@ -477,12 +479,15 @@ export function createModule<
     actionCreators: TActionCreators;
   }
 ): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<
-    TPath,
-    unknown,
-    TActionFromActionCreators,
-    TActionCreators,
-    TInitializer
+  ReduxModuleTypeContainerWithProps<
+    ReduxModuleTypeContainerWithActionCreator<
+      ReduxModuleTypeContainerWithAction<
+        ReduxModuleTypeContainerNameOnly<TPath>,
+        TActionFromActionCreators
+      >,
+      TActionCreators
+    >,
+    TProps
   >
 >;
 /**
@@ -492,14 +497,15 @@ export function createModule<
  */
 export function createModule<
   TPath extends string,
-  TInitializer extends ModuleInitializer<any>
+  TInitializer extends ModuleInitializer<any>,
+  TProps = ModuleInitializerPropsType<TInitializer>
 >(
   name: TPath,
   options: {
     initializer: TInitializer;
   }
 ): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainerNameAndInitializerOnly<TPath, TInitializer>
+  ReduxModuleTypeContainerNameAndPropsOnly<TPath, TProps>
 >;
 /**
  * Creates a named module with actionCreators.
@@ -516,12 +522,12 @@ export function createModule<
     actionCreators: TActionCreators;
   }
 ): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<
-    TPath,
-    unknown,
-    TActionFromActionCreators,
-    TActionCreators,
-    undefined
+  ReduxModuleTypeContainerWithActionCreator<
+    ReduxModuleTypeContainerWithAction<
+      ReduxModuleTypeContainerNameOnly<TPath>,
+      TActionFromActionCreators
+    >,
+    TActionCreators
   >
 >;
 /**
@@ -538,17 +544,18 @@ export function createModule<TPath extends string>(
 export function createModule<
   TInitializer extends ModuleInitializer<any>,
   TActionCreators extends Record<string, (...args: any) => Action>,
-  TActionFromActionCreators extends Action = ActionFromActionCreators<TActionCreators>
+  TActionFromActionCreators extends Action = ActionFromActionCreators<TActionCreators>,
+  TProps = ModuleInitializerPropsType<TInitializer>
 >(options: {
   initializer: TInitializer;
   actionCreators: TActionCreators;
 }): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<
-    '_',
-    unknown,
-    TActionFromActionCreators,
-    TActionCreators,
-    TInitializer
+  ReduxModuleTypeContainerWithActionCreator<
+    ReduxModuleTypeContainerWithAction<
+      ReduxModuleTypeContainerNameAndPropsOnly<'_', TProps>,
+      TActionFromActionCreators
+    >,
+    TActionCreators
   >
 >;
 /**
@@ -556,11 +563,12 @@ export function createModule<
  * @param options
  */
 export function createModule<
-  TInitializer extends ModuleInitializer<any>
+  TInitializer extends ModuleInitializer<any>,
+  TProps = ModuleInitializerPropsType<TInitializer>
 >(options: {
   initializer: TInitializer;
 }): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<'_', unknown, unknown, unknown, TInitializer>
+  ReduxModuleTypeContainerWithProps<ReduxModuleTypeContainerUnamed, TProps>
 >;
 /**
  * Creates an unamed module with action creators.
@@ -572,12 +580,12 @@ export function createModule<
 >(options: {
   actionCreators: TActionCreators;
 }): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<
-    '_',
-    unknown,
-    TActionFromActionCreators,
-    TActionCreators,
-    undefined
+  ReduxModuleTypeContainerWithActionCreator<
+    ReduxModuleTypeContainerWithAction<
+      ReduxModuleTypeContainerUnamed,
+      TActionFromActionCreators
+    >,
+    TActionCreators
   >
 >;
 /**

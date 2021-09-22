@@ -8,10 +8,7 @@ import {
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
 import { Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-  ReduxModuleTypeContainerComposite,
-  ReduxModuleTypeContainerCombinedWith,
-} from './redux-module';
+import { ReduxModuleTypeContainerCombinedWith } from './redux-module';
 
 /**
  * Action types which can be dispatched
@@ -52,15 +49,7 @@ describe('redux-modules', () => {
       });
     expectType<
       TypeOf<
-        ReduxModule<
-          ReduxModuleTypeContainer<
-            'test',
-            StateType,
-            ActionTypes,
-            unknown,
-            undefined
-          >
-        >,
+        ReduxModule<ReduxModuleTypeContainer<'test', StateType, ActionTypes>>,
         typeof mod
       >
     >(true);
@@ -112,9 +101,6 @@ describe('redux-modules', () => {
       someValue: true,
       anotherValue: 'another_value',
     });
-
-    type T = typeof combinedInitialized['_types']['_initializerPropsType'];
-
     combinedInitialized
       .configure((store) => {
         expect(store.props.someValue).toBe(true);
@@ -167,6 +153,7 @@ describe('redux-modules', () => {
       expect(action).toBeDefined();
       return { ...state, something: props.id };
     });
+    type T = {} extends Required<{ foo?: string }> ? true : false;
     // it can still initialize
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     // but also skip initialization and just create the store

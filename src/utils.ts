@@ -95,7 +95,7 @@ export type UnionToIntersection<U> = (
 type UnionForAny<T> = T extends never ? 'A' : 'B';
 
 // Returns true if type is any, or false for any other type.
-type IsStrictlyAny<T> = UnionToIntersection<UnionForAny<T>> extends never
+export type IsStrictlyAny<T> = UnionToIntersection<UnionForAny<T>> extends never
   ? true
   : false;
 
