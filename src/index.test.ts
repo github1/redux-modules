@@ -153,7 +153,6 @@ describe('redux-modules', () => {
       expect(action).toBeDefined();
       return { ...state, something: props.id };
     });
-    type T = {} extends Required<{ foo?: string }> ? true : false;
     // it can still initialize
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     // but also skip initialization and just create the store
@@ -164,13 +163,6 @@ describe('redux-modules', () => {
     expect(mod.asStore().getState().test.something).toBe('this-is-the-default');
   });
   it('combining an uninitialized module with an uninitialized module which has optional props results in an uninitialized module', () => {
-    const mode2 = createModule('test').with(
-      createModule('test2', {
-        initializer(props: { test2Prop: string }) {
-          return props;
-        },
-      })
-    );
     const mod = createModule('test')
       .with(
         createModule('test2', {
@@ -295,6 +287,15 @@ describe('redux-modules', () => {
           }
         )
       );
+    expectType<
+      TypeEqual<typeof mod.modules.foo.bar['_types']['_nameType'], 'bar'>
+    >(true);
+    expectType<
+      TypeEqual<
+        typeof mod.modules.foo.bar['_types']['_stateType'],
+        { fooBar: string }
+      >
+    >(true);
     const store = mod.asStore();
     expectType<
       TypeEqual<
@@ -360,6 +361,24 @@ describe('redux-modules', () => {
       .on('MOD2', () => () => (action) => {
         expectType<TypeEqual<typeof action, { type: 'MOD2_ACTION' }>>(true);
       });
+  });
+  it('exposes combined modules', () => {
+    const mod = createModule('test')
+      .with(
+        createModule('test2', {
+          actionCreators: {
+            a1(): { type: 'A1' } {
+              return { type: 'A1' };
+            },
+          },
+        })
+      )
+      .with(createModule('test2.something'));
+    expect(mod.modules.test2.actions.a1().type).toBe('A1');
+    expect(mod.modules.test2.something.name).toBe('something');
+    expect(mod.modules.test2.something.path).toEqual(
+      expect.arrayContaining(['test2', 'something'])
+    );
   });
   it('can be made into a store', () => {
     const mod = createModule('test', {
@@ -840,7 +859,6 @@ describe('redux-modules', () => {
         typeof mod1['_types'],
         typeof mod2['_types']
       >;
-      type T = Mod1WithMod2['_actionType']['type'];
       expectType<TypeEqual<Mod1WithMod2['_actionType']['type'], 'A1' | 'A2'>>(
         true
       );

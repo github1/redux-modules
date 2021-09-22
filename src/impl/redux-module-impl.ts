@@ -79,11 +79,13 @@ class ReduxModuleImplementation<
     ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>,
     ReduxModuleFullyInitialized<TReduxModuleTypeContainer>
 {
-  public readonly _types: TReduxModuleTypeContainer;
+  public readonly name: TName;
+  public readonly path: string[];
   public readonly actions: Readonly<any>;
+  public readonly _types: TReduxModuleTypeContainer;
   private combinedModules: Readonly<ReduxModule<any>[]>;
   constructor(
-    public readonly name: TName,
+    private readonly rawPath: string,
     actions: any,
     private reducer: ReduxModuleReducer<TReduxModuleTypeContainer>,
     private middlewareFactory: MiddlewareFactory<TStoreState, TAction>,
@@ -96,6 +98,8 @@ class ReduxModuleImplementation<
     >,
     combinedModules: ReduxModule<any>[]
   ) {
+    this.path = this.nameToPath(rawPath);
+    this.name = [...this.path].pop() as TName;
     if (!Object.isFrozen(actions)) {
       // ensure action creator has 'this' when destructured
       Object.keys(actions).forEach((actionCreatorName) => {
@@ -108,12 +112,16 @@ class ReduxModuleImplementation<
     }
     this.combinedModules = combinedModules || [];
   }
-  public get path() {
-    return this.nameToPath(this.name);
+  public get modules() {
+    const mods: any = {};
+    this.combinedModules.forEach((mod) => {
+      mergeDeep(mods, wrapInPath(mod, mod.path));
+    });
+    return mods;
   }
   public configure(configure: PostConfigure<TReduxModuleTypeContainer>) {
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       this.reducer,
       this.middlewareFactory,
@@ -126,7 +134,7 @@ class ReduxModuleImplementation<
   }
   public reduce(reducer: ReduxModuleReducer<TReduxModuleTypeContainer>) {
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       reducer,
       this.middlewareFactory,
@@ -139,7 +147,7 @@ class ReduxModuleImplementation<
   }
   public preloadedState(preloadedState: any) {
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       this.reducer,
       this.middlewareFactory,
@@ -199,7 +207,7 @@ class ReduxModuleImplementation<
       return [...currentMiddlewareFactory(props, actions), wrapped];
     };
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       this.reducer,
       newMiddlewareFactory,
@@ -240,7 +248,7 @@ class ReduxModuleImplementation<
       };
     };
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       this.reducer,
       this.middlewareFactory,
@@ -271,7 +279,7 @@ class ReduxModuleImplementation<
       return { ...existing, ...added };
     };
     return new ReduxModuleImplementation(
-      this.name,
+      this.rawPath,
       this.actions,
       this.reducer,
       this.middlewareFactory,
@@ -470,7 +478,7 @@ export function createModule<
   TPath extends string,
   TInitializer extends ModuleInitializer<any>,
   TActionCreators extends Record<string, (...args: any) => Action>,
-  TActionFromActionCreators extends Action = ActionFromActionCreators<TActionCreators>,
+  TActionFromActionCreators extends ActionFromActionCreators<TActionCreators>,
   TProps = ModuleInitializerPropsType<TInitializer>
 >(
   name: TPath,
