@@ -8,6 +8,7 @@ import {
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
 import { Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { ReduxModuleComposite, ReduxModuleCompositeWith } from './redux-module';
 
 /**
  * Action types which can be dispatched
@@ -49,14 +50,14 @@ describe('redux-modules', () => {
     expectType<
       TypeOf<
         ReduxModule<
-          ReduxModuleTypeContainer<
-            'test',
-            StateType,
-            ActionTypes,
-            unknown,
-            undefined,
-            unknown,
-            unknown
+          ReduxModuleComposite<
+            ReduxModuleTypeContainer<
+              'test',
+              StateType,
+              ActionTypes,
+              unknown,
+              undefined
+            >
           >
         >,
         typeof mod
@@ -170,6 +171,13 @@ describe('redux-modules', () => {
     expect(mod.asStore().getState().test.something).toBe('this-is-the-default');
   });
   it('combining an uninitialized module with an uninitialized module which has optional props results in an uninitialized module', () => {
+    const mode2 = createModule('test').with(
+      createModule('test2', {
+        initializer(props: { test2Prop: string }) {
+          return props;
+        },
+      })
+    );
     const mod = createModule('test')
       .with(
         createModule('test2', {
@@ -773,5 +781,58 @@ describe('redux-modules', () => {
           (action) => (action as any).source === 'from-single'
         )
     ).toBeTruthy();
+  });
+  describe('ReduxModuleCompositeWith', () => {
+    it('adds modules with different paths', () => {
+      // combining two ReduxModuleTypeContainer with different names
+      // should union them in a ReduxModuleComposite
+      const mod1 = createModule('test');
+      const mod2 = createModule('test2');
+      type Mod1WithMod2 = ReduxModuleCompositeWith<
+        typeof mod1['_types'],
+        typeof mod2['_types']
+      >;
+      expectType<
+        TypeEqual<Mod1WithMod2['_modules']['_nameType'], 'test' | 'test2'>
+      >(true);
+      // adding another ReduxModuleTypeContainer to the ReduxModuleComposite
+      // from above should union the new into the modules
+      const mod3 = createModule('test3');
+      type Mod1WithMod2WithMod3 = ReduxModuleCompositeWith<
+        Mod1WithMod2,
+        typeof mod3['_types']
+      >;
+      expectType<
+        TypeEqual<
+          Mod1WithMod2WithMod3['_modules']['_nameType'],
+          'test' | 'test2' | 'test3'
+        >
+      >(true);
+      // adding two redux ReduxModuleComposite
+      const mod4 = createModule('test4');
+      const mod5 = createModule('test5');
+      type Mod4WithMod5 = ReduxModuleCompositeWith<
+        typeof mod4['_types'],
+        typeof mod5['_types']
+      >;
+      type Mod1WithMod2_with_Mod4WithMod5 = ReduxModuleCompositeWith<
+        Mod1WithMod2,
+        Mod4WithMod5
+      >;
+      expectType<
+        TypeEqual<
+          Mod1WithMod2_with_Mod4WithMod5['_modules']['_nameType'],
+          'test' | 'test2' | 'test4' | 'test5'
+        >
+      >(true);
+    });
+    it('replaces modules with the same path', () => {
+      const mod1 = createModule('test');
+      type T = ReduxModuleCompositeWith<
+        typeof mod1['_types'],
+        typeof mod1['_types']
+      >;
+      expectType<TypeEqual<T['_nameType'], 'test'>>(true);
+    });
   });
 });

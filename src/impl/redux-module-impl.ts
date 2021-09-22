@@ -14,17 +14,18 @@ import { wrapInPath, mergeDeep } from '../utils';
 import thunk, { ThunkDispatch } from 'redux-thunk';
 import { ReloadableStoreImpl } from './reloadable-store-impl';
 import {
+  ReduxModuleComposite,
   ReduxModule,
   ReduxModuleRequiresInitialization,
   ReduxModuleFullyInitialized,
   ReduxModuleMayRequireInitialization,
   ProvidedModuleProps,
-  ReduxModuleAny,
   ReduxModuleTypeContainer,
   ReduxModuleNameOnly,
   ReduxModuleNameAndInitializerOnly,
   ReduxModuleUnamed,
   Interceptor,
+  ReduxModuleCompositeAny,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -66,7 +67,7 @@ function runReducer(
 }
 
 class ReduxModuleImplementation<
-  TReduxModuleTypeContainer extends ReduxModuleAny,
+  TReduxModuleTypeContainer extends ReduxModuleCompositeAny,
   TName extends string = TReduxModuleTypeContainer['_nameType'],
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
@@ -281,7 +282,7 @@ class ReduxModuleImplementation<
     ) as any;
   }
 
-  public asStore(options: ReduxModuleStoreOptions<TStoreState> = {}): any {
+  public asStore(options: ReduxModuleStoreOptions<any> = {}): any {
     const storeFactory = (): ReduxModuleStore<TReduxModuleTypeContainer> => {
       const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
         [this, ...(this.combinedModules as any)];
@@ -481,8 +482,7 @@ export function createModule<
     unknown,
     TActionFromActionCreators,
     TActionCreators,
-    TInitializer,
-    unknown
+    TInitializer
   >
 >;
 /**
@@ -521,8 +521,7 @@ export function createModule<
     unknown,
     TActionFromActionCreators,
     TActionCreators,
-    undefined,
-    unknown
+    undefined
   >
 >;
 /**
@@ -549,8 +548,7 @@ export function createModule<
     unknown,
     TActionFromActionCreators,
     TActionCreators,
-    TInitializer,
-    unknown
+    TInitializer
   >
 >;
 /**
@@ -562,14 +560,7 @@ export function createModule<
 >(options: {
   initializer: TInitializer;
 }): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainer<
-    '_',
-    unknown,
-    unknown,
-    unknown,
-    TInitializer,
-    unknown
-  >
+  ReduxModuleTypeContainer<'_', unknown, unknown, unknown, TInitializer>
 >;
 /**
  * Creates an unamed module with action creators.
@@ -586,8 +577,7 @@ export function createModule<
     unknown,
     TActionFromActionCreators,
     TActionCreators,
-    undefined,
-    unknown
+    undefined
   >
 >;
 /**

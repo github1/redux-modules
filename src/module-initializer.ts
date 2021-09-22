@@ -1,4 +1,4 @@
-import { $AND, $OR, LengthOfTuple } from './utils';
+import { $AND, $OR, LengthOfTuple, UnionToIntersection } from './utils';
 import { TypeEqual, TypeOf } from 'ts-expect';
 
 type FirstParameterActual<TFunc> = TFunc extends (
@@ -56,21 +56,29 @@ export type ModuleInitializerHasProps<TInitializer, TYes, TNo> =
       : TYes
     : TNo;
 
-export type ModuleInitializerCombined<
-  TInitializerA,
-  TInitializerB,
-  TARequiresProps = ModuleInitializerRequiresProps<TInitializerA, true, false>,
-  TBRequiresProps = ModuleInitializerRequiresProps<TInitializerB, true, false>
-> = true extends $OR<
-  $AND<TARequiresProps, TBRequiresProps>,
-  TypeEqual<true & false, TARequiresProps | TBRequiresProps>
->
-  ? ModuleInitializer<
-      ModuleInitializerPropsType<TInitializerA> &
-        ModuleInitializerPropsType<TInitializerB>
-    >
-  : true extends TARequiresProps
-  ? TInitializerA
-  : true extends TBRequiresProps
-  ? TInitializerB
-  : undefined;
+// export type ModuleInitializerCombined<
+//   TInitializerA,
+//   TInitializerB,
+//   TARequiresProps = ModuleInitializerRequiresProps<TInitializerA, true, false>,
+//   TBRequiresProps = ModuleInitializerRequiresProps<TInitializerB, true, false>
+// > = true extends $OR<
+//   $AND<TARequiresProps, TBRequiresProps>,
+//   TypeEqual<true & false, TARequiresProps | TBRequiresProps>
+// >
+//   ? ModuleInitializer<
+//       ModuleInitializerPropsType<TInitializerA> &
+//         ModuleInitializerPropsType<TInitializerB>
+//     >
+//   : true extends TARequiresProps
+//   ? TInitializerA
+//   : true extends TBRequiresProps
+//   ? TInitializerB
+//   : undefined;
+
+export type ModuleInitializerCombined<TInitializer> = ModuleInitializer<
+  UnionToIntersection<
+    true extends ModuleInitializerRequiresProps<TInitializer, true, false>
+      ? ModuleInitializerPropsType<TInitializer>
+      : never
+  >
+>;

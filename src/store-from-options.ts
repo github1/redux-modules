@@ -1,3 +1,4 @@
+import { ReduxModuleCompositeWith } from '.';
 import { RecordingStoreState } from './recording-module';
 import { ReduxModuleAny, ReduxModuleTypeContainer } from './redux-module';
 import { ReduxModuleStore } from './redux-module-store';
@@ -9,21 +10,18 @@ export type StoreFromOptions<
   TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
     TReduxModule['_storeStateType']
   >,
-  TStoreStateFinal = Readonly<
-    TReduxModuleStoreOptions['record'] extends true
-      ? TReduxModule['_storeStateType'] &
-          RecordingStoreState<TReduxModule['_actionType']>
-      : TReduxModule['_storeStateType']
-  >,
-  TReduxModuleFinal extends ReduxModuleAny = ReduxModuleTypeContainer<
-    TReduxModule['_pathType'],
-    TReduxModule['_stateType'],
-    TReduxModule['_actionType'],
-    TReduxModule['_actionCreatorType'],
-    TReduxModule['_initializerType'],
-    TStoreStateFinal,
-    TReduxModule['_storeActionCreatorsType']
-  >
+  TReduxModuleFinal extends ReduxModuleAny = TReduxModuleStoreOptions['record'] extends true
+    ? ReduxModuleCompositeWith<
+        TReduxModule,
+        ReduxModuleTypeContainer<
+          'recording',
+          RecordingStoreState<TReduxModule['_actionType']>['recording'],
+          undefined,
+          undefined,
+          undefined
+        >
+      >
+    : TReduxModule
 > = (TReduxModuleStoreOptions['deferred'] extends true
   ? ReloadableStore<TReduxModuleFinal>
   : {}) &

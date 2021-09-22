@@ -3,7 +3,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { ReduxModuleAny } from '.';
 
 export type ReduxModuleStore<TReduxModule extends ReduxModuleAny> = Store<
-  TReduxModule['_storeStateType'],
+  Readonly<TReduxModule['_storeStateType']>,
   TReduxModule['_actionType']
 > & {
   dispatch: ThunkDispatch<

@@ -1,11 +1,11 @@
 import { Action, Dispatch, Observable, Reducer, Unsubscribe } from 'redux';
-import { ReduxModuleAny } from '../redux-module';
+import { ReduxModuleCompositeAny } from '../redux-module';
 import { ReduxModuleStore } from '../redux-module-store';
 import { ReloadableStore } from '../reloadable-store';
 import { RestrictToAction } from '../type-helpers';
 
 export class ReloadableStoreImpl<
-  TReduxModule extends ReduxModuleAny,
+  TReduxModule extends ReduxModuleCompositeAny,
   TAction extends Action | never = TReduxModule['_actionType'],
   TActionCreatorsInStore = TReduxModule['_storeActionCreatorsType'],
   TInitializerPropTypes = TReduxModule['_initializerRequiredPropsType'],
@@ -28,7 +28,7 @@ export class ReloadableStoreImpl<
     return this.store.props as any;
   }
   getState(): TStoreState {
-    return this.store.getState();
+    return this.store.getState() as any;
   }
   subscribe(listener: () => void): Unsubscribe {
     return this.store.subscribe(listener);
