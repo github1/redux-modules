@@ -3,12 +3,15 @@ import {
   ReduxModule,
   isAction,
   ReduxModuleTypeContainer,
-  ReduxModuleAny,
+  ReduxModuleTypeContainerAny,
 } from './index';
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
 import { Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ReduxModuleComposite, ReduxModuleCompositeWith } from './redux-module';
+import {
+  ReduxModuleTypeContainerComposite,
+  ReduxModuleTypeContainerCombinedWith,
+} from './redux-module';
 
 /**
  * Action types which can be dispatched
@@ -50,14 +53,12 @@ describe('redux-modules', () => {
     expectType<
       TypeOf<
         ReduxModule<
-          ReduxModuleComposite<
-            ReduxModuleTypeContainer<
-              'test',
-              StateType,
-              ActionTypes,
-              unknown,
-              undefined
-            >
+          ReduxModuleTypeContainer<
+            'test',
+            StateType,
+            ActionTypes,
+            unknown,
+            undefined
           >
         >,
         typeof mod
@@ -84,21 +85,6 @@ describe('redux-modules', () => {
     const initialized = notInitialized.initialize({ someValue: true });
     expectType<'asStore' extends keyof typeof initialized ? true : false>(true);
 
-    // combined modules need all props fullfiled
-    const anotherNotInitialized = createModule('test2', {
-      initializer({ anotherValue }) {
-        return { anotherValue: `processed_${anotherValue}` };
-      },
-    });
-    const combinedNotInitialized = notInitialized.with(anotherNotInitialized);
-    expectType<
-      'asStore' extends keyof typeof combinedNotInitialized ? true : false
-    >(false);
-    const combinedInitialized = combinedNotInitialized.initialize({
-      someValue: true,
-      anotherValue: 'another_value',
-    });
-
     // props can be accessed in configure
     initialized
       .configure((store) => {
@@ -108,6 +94,26 @@ describe('redux-modules', () => {
         >(true);
       })
       .asStore();
+
+    // combined modules need all props fullfiled
+    const anotherNotInitialized = createModule('test2', {
+      initializer({ anotherValue }) {
+        return { anotherValue: `processed_${anotherValue}` };
+      },
+    });
+    expectType<
+      'asStore' extends keyof typeof anotherNotInitialized ? true : false
+    >(false);
+    const combinedNotInitialized = notInitialized.with(anotherNotInitialized);
+    expectType<
+      'asStore' extends keyof typeof combinedNotInitialized ? true : false
+    >(false);
+    const combinedInitialized = combinedNotInitialized.initialize({
+      someValue: true,
+      anotherValue: 'another_value',
+    });
+
+    type T = typeof combinedInitialized['_types']['_initializerPropsType'];
 
     combinedInitialized
       .configure((store) => {
@@ -692,24 +698,28 @@ describe('redux-modules', () => {
       "Cannot assign to read only property 'doSomething' of object"
     );
   });
-  it('a module is assignable to ReduxModule<ReduxModuleAny>', () => {
-    expectType<ReduxModule<ReduxModuleAny>>(createModule());
-    expectType<ReduxModule<ReduxModuleAny>>(createModule('foo->bar'));
-    expectType<ReduxModule<ReduxModuleAny>>(
+  it('a module is assignable to ReduxModule<ReduxModuleTypeContainerAny>', () => {
+    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(createModule());
+    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
+      createModule('foo->bar')
+    );
+    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
       createModule('foo->bar').reduce(
         (state: StateType, action: ActionTypes) => {
           return { ...state, actionTypes: [action.type] };
         }
       )
     );
-    expectType<ReduxModule<ReduxModuleAny>>(
+    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
       createModule('foo->bar', {
         initializer(props: { something: string }) {
           return props;
         },
       })
     );
-    function testFunc<T extends ReduxModule<ReduxModuleAny>>(mod: T) {
+    function testFunc<T extends ReduxModule<ReduxModuleTypeContainerAny>>(
+      mod: T
+    ) {
       expectType<TypeOf<T, typeof mod>>(true);
     }
     const mod = createModule('foo').reduce(
@@ -785,20 +795,20 @@ describe('redux-modules', () => {
   describe('ReduxModuleCompositeWith', () => {
     it('adds modules with different paths', () => {
       // combining two ReduxModuleTypeContainer with different names
-      // should union them in a ReduxModuleComposite
+      // should union them in a ReduxModuleTypeContainerComposite
       const mod1 = createModule('test');
       const mod2 = createModule('test2');
-      type Mod1WithMod2 = ReduxModuleCompositeWith<
+      type Mod1WithMod2 = ReduxModuleTypeContainerCombinedWith<
         typeof mod1['_types'],
         typeof mod2['_types']
       >;
       expectType<
         TypeEqual<Mod1WithMod2['_modules']['_nameType'], 'test' | 'test2'>
       >(true);
-      // adding another ReduxModuleTypeContainer to the ReduxModuleComposite
+      // adding another ReduxModuleTypeContainer to the ReduxModuleTypeContainerComposite
       // from above should union the new into the modules
       const mod3 = createModule('test3');
-      type Mod1WithMod2WithMod3 = ReduxModuleCompositeWith<
+      type Mod1WithMod2WithMod3 = ReduxModuleTypeContainerCombinedWith<
         Mod1WithMod2,
         typeof mod3['_types']
       >;
@@ -808,17 +818,15 @@ describe('redux-modules', () => {
           'test' | 'test2' | 'test3'
         >
       >(true);
-      // adding two redux ReduxModuleComposite
+      // adding two redux ReduxModuleTypeContainerComposite
       const mod4 = createModule('test4');
       const mod5 = createModule('test5');
-      type Mod4WithMod5 = ReduxModuleCompositeWith<
+      type Mod4WithMod5 = ReduxModuleTypeContainerCombinedWith<
         typeof mod4['_types'],
         typeof mod5['_types']
       >;
-      type Mod1WithMod2_with_Mod4WithMod5 = ReduxModuleCompositeWith<
-        Mod1WithMod2,
-        Mod4WithMod5
-      >;
+      type Mod1WithMod2_with_Mod4WithMod5 =
+        ReduxModuleTypeContainerCombinedWith<Mod1WithMod2, Mod4WithMod5>;
       expectType<
         TypeEqual<
           Mod1WithMod2_with_Mod4WithMod5['_modules']['_nameType'],
@@ -826,13 +834,51 @@ describe('redux-modules', () => {
         >
       >(true);
     });
-    it('replaces modules with the same path', () => {
-      const mod1 = createModule('test');
-      type T = ReduxModuleCompositeWith<
+    it('combined action types into a union type', () => {
+      const mod1 = createModule('test', {
+        actionCreators: {
+          a1(): { type: 'A1' } {
+            return null;
+          },
+        },
+      });
+      const mod2 = createModule('test2', {
+        actionCreators: {
+          a2(): { type: 'A2' } {
+            return null;
+          },
+        },
+      });
+      type Mod1WithMod2 = ReduxModuleTypeContainerCombinedWith<
         typeof mod1['_types'],
-        typeof mod1['_types']
+        typeof mod2['_types']
       >;
-      expectType<TypeEqual<T['_nameType'], 'test'>>(true);
+      type T = Mod1WithMod2['_actionType']['type'];
+      expectType<TypeEqual<Mod1WithMod2['_actionType']['type'], 'A1' | 'A2'>>(
+        true
+      );
+    });
+    it('replaces modules with the same path', () => {
+      const mod1 = createModule('test', {
+        actionCreators: {
+          a1(): { type: 'A1' } {
+            return null;
+          },
+        },
+      });
+      const mod2 = createModule('test', {
+        actionCreators: {
+          a2(): { type: 'A2' } {
+            return null;
+          },
+        },
+      });
+      type Mod1WithMod2 = ReduxModuleTypeContainerCombinedWith<
+        typeof mod1['_types'],
+        typeof mod2['_types']
+      >;
+      expectType<TypeEqual<Mod1WithMod2['_nameType'], 'test'>>(true);
+      expectType<TypeEqual<Mod1WithMod2['_actionType']['type'], 'A2'>>(true);
     });
   });
 });

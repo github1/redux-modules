@@ -14,18 +14,18 @@ import { wrapInPath, mergeDeep } from '../utils';
 import thunk, { ThunkDispatch } from 'redux-thunk';
 import { ReloadableStoreImpl } from './reloadable-store-impl';
 import {
-  ReduxModuleComposite,
+  ReduxModuleTypeContainerComposite,
   ReduxModule,
   ReduxModuleRequiresInitialization,
   ReduxModuleFullyInitialized,
   ReduxModuleMayRequireInitialization,
   ProvidedModuleProps,
   ReduxModuleTypeContainer,
-  ReduxModuleNameOnly,
-  ReduxModuleNameAndInitializerOnly,
-  ReduxModuleUnamed,
+  ReduxModuleTypeContainerNameOnly,
+  ReduxModuleTypeContainerNameAndInitializerOnly,
+  ReduxModuleTypeContainerUnamed,
   Interceptor,
-  ReduxModuleCompositeAny,
+  ReduxModuleTypeContainerCompositeAny,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -67,7 +67,7 @@ function runReducer(
 }
 
 class ReduxModuleImplementation<
-  TReduxModuleTypeContainer extends ReduxModuleCompositeAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny,
   TName extends string = TReduxModuleTypeContainer['_nameType'],
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
@@ -499,7 +499,7 @@ export function createModule<
     initializer: TInitializer;
   }
 ): ReduxModuleMayRequireInitialization<
-  ReduxModuleNameAndInitializerOnly<TPath, TInitializer>
+  ReduxModuleTypeContainerNameAndInitializerOnly<TPath, TInitializer>
 >;
 /**
  * Creates a named module with actionCreators.
@@ -530,7 +530,7 @@ export function createModule<
  */
 export function createModule<TPath extends string>(
   name: TPath
-): ReduxModuleFullyInitialized<ReduxModuleNameOnly<TPath>>;
+): ReduxModuleFullyInitialized<ReduxModuleTypeContainerNameOnly<TPath>>;
 /**
  * Creates an unamed module with initialize and actionCreators.
  * @param options
@@ -583,7 +583,7 @@ export function createModule<
 /**
  * Creates an unamed module without options.
  */
-export function createModule(): ReduxModuleFullyInitialized<ReduxModuleUnamed>;
+export function createModule(): ReduxModuleFullyInitialized<ReduxModuleTypeContainerUnamed>;
 /**
  * createModule implementation
  * @param nameOrOptions

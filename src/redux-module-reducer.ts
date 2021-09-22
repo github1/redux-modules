@@ -1,6 +1,6 @@
-import { ReduxModuleAny } from './redux-module';
+import { ReduxModuleTypeContainerAny } from './redux-module';
 
-export type ReduxModuleReducer<TReduxModule extends ReduxModuleAny> = (
+export type ReduxModuleReducer<TReduxModule extends ReduxModuleTypeContainerAny> = (
   state: TReduxModule['_stateType'],
   action: TReduxModule['_actionType'],
   props: Readonly<TReduxModule['_initializerRequiredPropsType']>

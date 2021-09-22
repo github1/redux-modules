@@ -1,9 +1,9 @@
 import { MiddlewareAPI, Dispatch, AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ReduxModuleAny } from './redux-module';
+import { ReduxModuleTypeContainerAny } from './redux-module';
 
 export interface ReduxModuleMiddleware<
-  TReduxModule extends ReduxModuleAny,
+  TReduxModule extends ReduxModuleTypeContainerAny,
   TStoreStateFinal = Readonly<TReduxModule['_storeStateType']>,
   TDispatch extends ThunkDispatch<
     TStoreStateFinal,

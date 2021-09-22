@@ -1,17 +1,17 @@
-import { ReduxModuleCompositeWith } from '.';
+import { ReduxModuleTypeContainerCombinedWith } from '.';
 import { RecordingStoreState } from './recording-module';
-import { ReduxModuleAny, ReduxModuleTypeContainer } from './redux-module';
+import { ReduxModuleTypeContainerAny, ReduxModuleTypeContainer } from './redux-module';
 import { ReduxModuleStore } from './redux-module-store';
 import { ReduxModuleStoreOptions } from './redux-module-store-options';
 import { ReloadableStore } from './reloadable-store';
 
 export type StoreFromOptions<
-  TReduxModule extends ReduxModuleAny,
+  TReduxModule extends ReduxModuleTypeContainerAny,
   TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
     TReduxModule['_storeStateType']
   >,
-  TReduxModuleFinal extends ReduxModuleAny = TReduxModuleStoreOptions['record'] extends true
-    ? ReduxModuleCompositeWith<
+  TReduxModuleFinal extends ReduxModuleTypeContainerAny = TReduxModuleStoreOptions['record'] extends true
+    ? ReduxModuleTypeContainerCombinedWith<
         TReduxModule,
         ReduxModuleTypeContainer<
           'recording',

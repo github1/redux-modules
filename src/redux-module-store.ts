@@ -1,8 +1,8 @@
 import { Store } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ReduxModuleAny } from '.';
+import { ReduxModuleTypeContainerAny } from '.';
 
-export type ReduxModuleStore<TReduxModule extends ReduxModuleAny> = Store<
+export type ReduxModuleStore<TReduxModule extends ReduxModuleTypeContainerAny> = Store<
   Readonly<TReduxModule['_storeStateType']>,
   TReduxModule['_actionType']
 > & {

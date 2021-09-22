@@ -7,14 +7,14 @@ import {
 import { Handler, Predicate } from '../utils';
 import { ReduxModuleMiddleware } from '../redux-module-middleware';
 import {
-  ReduxModuleComposite,
+  ReduxModuleTypeContainerComposite,
   ReduxModuleTypeContainer,
 } from '../redux-module';
 
 export function RecordingModuleMiddleware<
   TAction extends Action
 >(): ReduxModuleMiddleware<
-  ReduxModuleComposite<
+  ReduxModuleTypeContainerComposite<
     'recording',
     ReduxModuleTypeContainer<
       'recording',
