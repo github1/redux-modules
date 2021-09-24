@@ -1,3 +1,3 @@
 export { isAction } from './is-action';
 export * from './redux-module';
-export * from './impl/redux-module-impl';
+export { createModule } from './impl/redux-module-impl';

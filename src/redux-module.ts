@@ -3,7 +3,6 @@ import { TypeEqual } from 'ts-expect';
 import {
   ActionFromReducer,
   ActionTypeContainsSubstring,
-  RestrictToAction,
   StateFromReducer,
   StoreStateAtPath,
 } from './type-helpers';
@@ -88,9 +87,6 @@ export type ReduxModuleTypeContainerComposite<
   TReduxModuleTypeContainer['_actionCreatorType'],
   TReduxModuleTypeContainerMembersAllProps
 > & {
-  // _initializerRequiredPropsType: Required<TReduxModuleTypeContainerMembersAllProps>;
-  // _initializerPropsType: TReduxModuleTypeContainerMembersAllProps;
-
   _modules: TReduxModuleTypeContainerMembersAll;
   _members: TReduxModuleTypeContainerMembers;
   // TODO handle ReduxModuleTypeContainerComposite types in the union type
@@ -124,12 +120,10 @@ export type ReduxModuleTypeContainerComposite<
   >;
 };
 
-export type ReduxModuleTypeContainerUnamed = ReduxModuleTypeContainer<
+export type ReduxModuleTypeContainerUnnamed = ReduxModuleTypeContainer<
   '_', // path
   undefined, // state
-  undefined, // action
-  undefined, // actionCreators
-  never // props
+  undefined // action
 >;
 
 type ReduxModuleTypeContainerWithPath<
@@ -277,7 +271,7 @@ export type ReduxModuleTypeContainerWithProps<
     >;
 
 export type ReduxModuleTypeContainerNameOnly<TPath extends string> =
-  ReduxModuleTypeContainerWithPath<ReduxModuleTypeContainerUnamed, TPath>;
+  ReduxModuleTypeContainerWithPath<ReduxModuleTypeContainerUnnamed, TPath>;
 
 export type ReduxModuleTypeContainerNameAndPropsOnly<
   TPath extends string,
@@ -288,13 +282,13 @@ export type ReduxModuleTypeContainerNameAndPropsOnly<
 >;
 
 export type ReduxModuleTypeContainerWithInitializationPropsProvided<
-  TReduxModule extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TPropsWhichWereProvided,
   TRemainingProps = Optional<
-    TReduxModule['_initializerPropsType'],
+    TReduxModuleTypeContainer['_initializerPropsType'],
     keyof TPropsWhichWereProvided
   >
-> = TReduxModule extends ReduxModuleTypeContainerComposite<
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
   infer ReduxModuleTypeContainerCompositeMembers
 >
@@ -308,7 +302,7 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
         TPropsWhichWereProvided
       >
     >
-  : ReduxModuleTypeContainerWithProps<TReduxModule, TRemainingProps>;
+  : ReduxModuleTypeContainerWithProps<TReduxModuleTypeContainer, TRemainingProps>;
 
 export type ReduxModuleTypeContainerCompositeAny =
   ReduxModuleTypeContainerComposite<
@@ -471,13 +465,13 @@ type OnFunctionType<
           ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
         >,
         TActionTypeOrMiddleware extends TMiddleware | string,
-        TActionFromMiddleware extends Action = RestrictToAction<
+        TActionFromMiddleware extends Action = Extract<
           TActionTypeOrMiddleware extends (
             ...store: any
           ) => (...next: any) => (action: infer TMiddlewareActionType) => void
             ? TMiddlewareActionType
             : TReduxModuleTypeContainer['_actionType']
-        >
+        , Action>
       >(
         typeOrHandler: TActionTypeOrMiddleware,
         handler?: TMiddleware
@@ -632,16 +626,16 @@ export type ProvidedModuleProps<
  * Interface for a redux module which requires initialization before it can be made into a store.
  */
 export interface ReduxModuleRequiresInitialization<
-  TReduxModule extends ReduxModuleTypeContainerAny
-> extends ReduxModule<TReduxModule> {
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> extends ReduxModule<TReduxModuleTypeContainer> {
   initialize<TProps>(
     props: ProvidedModuleProps<
-      TReduxModule,
-      MustOnlyHaveKeys<TProps, TReduxModule['_initializerPropsType']>
+      TReduxModuleTypeContainer,
+      MustOnlyHaveKeys<TProps, TReduxModuleTypeContainer['_initializerPropsType']>
     >
   ): ReduxModuleMayRequireInitialization<
     ReduxModuleTypeContainerWithInitializationPropsProvided<
-      TReduxModule,
+      TReduxModuleTypeContainer,
       TProps
     >
   >;
@@ -651,15 +645,15 @@ export interface ReduxModuleRequiresInitialization<
  * Interface for a redux module which is fully initialized.
  */
 export interface ReduxModuleFullyInitialized<
-  TReduxModule extends ReduxModuleTypeContainerAny
-> extends ReduxModule<TReduxModule> {
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> extends ReduxModule<TReduxModuleTypeContainer> {
   asStore<
     TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
-      TReduxModule['_storeStateType']
+      TReduxModuleTypeContainer['_storeStateType']
     >
   >(
     options?: TReduxModuleStoreOptions
-  ): StoreFromOptions<TReduxModule, TReduxModuleStoreOptions>;
+  ): StoreFromOptions<TReduxModuleTypeContainer, TReduxModuleStoreOptions>;
 }
 
 /**
@@ -667,23 +661,23 @@ export interface ReduxModuleFullyInitialized<
  * or ReduxModuleFullyInitialized whether initialization props have been supplied.
  */
 export type ReduxModuleMayRequireInitialization<
-  TReduxModule extends ReduxModuleTypeContainerAny,
-  TReduxModuleFullyInitialized = ReduxModuleFullyInitialized<TReduxModule>,
-  TReduxModuleRequiresInitialization = ReduxModuleRequiresInitialization<TReduxModule>
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleFullyInitialized = ReduxModuleFullyInitialized<TReduxModuleTypeContainer>,
+  TReduxModuleRequiresInitialization = ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>
 > = IsAny<
-  TReduxModule['_pathType'],
-  ReduxModule<TReduxModule>,
-  TReduxModule['_initializerPropsType'] extends undefined
+  TReduxModuleTypeContainer['_pathType'],
+  ReduxModule<TReduxModuleTypeContainer>,
+  TReduxModuleTypeContainer['_initializerPropsType'] extends undefined
     ? TReduxModuleFullyInitialized
-    : {} extends TReduxModule['_initializerPropsType']
-    ? {} extends Required<TReduxModule['_initializerPropsType']>
+    : {} extends TReduxModuleTypeContainer['_initializerPropsType']
+    ? {} extends Required<TReduxModuleTypeContainer['_initializerPropsType']>
       ? TReduxModuleFullyInitialized
       : // only has optional props, allow it to set props or create store
-        ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModule>
+        ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModuleTypeContainer>
     : TReduxModuleRequiresInitialization
 >;
 
 export type ReduxModuleRequiresInitializationOrFullyInitialized<
-  TReduxModule extends ReduxModuleTypeContainerAny
-> = ReduxModuleFullyInitialized<TReduxModule> &
-  ReduxModuleRequiresInitialization<TReduxModule>;
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = ReduxModuleFullyInitialized<TReduxModuleTypeContainer> &
+  ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>;

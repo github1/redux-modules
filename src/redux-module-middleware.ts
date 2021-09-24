@@ -3,20 +3,20 @@ import { ThunkDispatch } from 'redux-thunk';
 import { ReduxModuleTypeContainerAny } from './redux-module';
 
 export interface ReduxModuleMiddleware<
-  TReduxModule extends ReduxModuleTypeContainerAny,
-  TStoreStateFinal = Readonly<TReduxModule['_storeStateType']>,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TStoreStateFinal = Readonly<TReduxModuleTypeContainer['_storeStateType']>,
   TDispatch extends ThunkDispatch<
     TStoreStateFinal,
     any,
-    TReduxModule['_actionType']
-  > = ThunkDispatch<TStoreStateFinal, any, TReduxModule['_actionType']>
+    TReduxModuleTypeContainer['_actionType']
+  > = ThunkDispatch<TStoreStateFinal, any, TReduxModuleTypeContainer['_actionType']>
 > {
   (
     api: MiddlewareAPI<TDispatch, TStoreStateFinal> & {
-      actions: Readonly<TReduxModule['_storeActionCreatorsWithLocalType']>;
-      props: Readonly<TReduxModule['_initializerRequiredPropsType']>;
+      actions: Readonly<TReduxModuleTypeContainer['_storeActionCreatorsWithLocalType']>;
+      props: Readonly<TReduxModuleTypeContainer['_initializerRequiredPropsType']>;
     }
   ): (
     next: Dispatch<AnyAction>
-  ) => (action: TReduxModule['_actionType']) => any;
+  ) => (action: TReduxModuleTypeContainer['_actionType']) => any;
 }

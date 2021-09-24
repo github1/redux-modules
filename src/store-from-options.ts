@@ -6,22 +6,22 @@ import { ReduxModuleStoreOptions } from './redux-module-store-options';
 import { ReloadableStore } from './reloadable-store';
 
 export type StoreFromOptions<
-  TReduxModule extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
-    TReduxModule['_storeStateType']
+    TReduxModuleTypeContainer['_storeStateType']
   >,
   TReduxModuleFinal extends ReduxModuleTypeContainerAny = TReduxModuleStoreOptions['record'] extends true
     ? ReduxModuleTypeContainerCombinedWith<
-        TReduxModule,
+        TReduxModuleTypeContainer,
         ReduxModuleTypeContainer<
           'recording',
-          RecordingStoreState<TReduxModule['_actionType']>['recording'],
+          RecordingStoreState<TReduxModuleTypeContainer['_actionType']>['recording'],
           undefined,
           undefined,
           undefined
         >
       >
-    : TReduxModule
+    : TReduxModuleTypeContainer
 > = (TReduxModuleStoreOptions['deferred'] extends true
   ? ReloadableStore<TReduxModuleFinal>
   : {}) &

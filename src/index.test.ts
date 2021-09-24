@@ -324,7 +324,7 @@ describe('redux-modules', () => {
   });
   it('can be combined with other modules', () => {
     const mod1 = createModule('test').reduce(
-      (state: StateType, action: ActionTypes) => {
+      (state: StateType = { actionTypes: [] }, action: ActionTypes) => {
         return { ...state, actionTypes: [...state.actionTypes, action.type] };
       }
     );
@@ -338,7 +338,7 @@ describe('redux-modules', () => {
           return { ...state, mod2Stuff: action.type };
         }
       );
-    mod1
+    const mod3 = mod1
       .with(mod2)
       .on((store) => () => (action) => {
         // Store state is combined
@@ -361,6 +361,9 @@ describe('redux-modules', () => {
       .on('MOD2', () => () => (action) => {
         expectType<TypeEqual<typeof action, { type: 'MOD2_ACTION' }>>(true);
       });
+    const store = mod3.asStore();
+    expect(store.module.name).toBe('test');
+    expect(store.module.modules.mod2.name).toBe('mod2');
   });
   it('exposes combined modules', () => {
     const mod = createModule('test')

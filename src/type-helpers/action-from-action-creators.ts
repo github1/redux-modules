@@ -1,7 +1,7 @@
-import { RestrictToAction } from './restrict-to-action';
+import {Action} from "redux";
 import { NotAny } from '../utils';
 
-export type ActionFromActionCreators<TActionCreator> = RestrictToAction<
+export type ActionFromActionCreators<TActionCreator> = Extract<
   keyof {
     [K in keyof TActionCreator as TActionCreator[K] extends (
       ...args: any
@@ -11,4 +11,4 @@ export type ActionFromActionCreators<TActionCreator> = RestrictToAction<
       ? NotAny<TMaybeAction>
       : never;
   }
->;
+, Action>;

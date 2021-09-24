@@ -21,7 +21,7 @@ import {
   ProvidedModuleProps,
   ReduxModuleTypeContainerNameOnly,
   ReduxModuleTypeContainerNameAndPropsOnly,
-  ReduxModuleTypeContainerUnamed,
+  ReduxModuleTypeContainerUnnamed,
   Interceptor,
   ReduxModuleTypeContainerCompositeAny,
   ReduxModuleTypeContainerWithAction,
@@ -87,18 +87,18 @@ class ReduxModuleImplementation<
   constructor(
     private readonly rawPath: string,
     actions: any,
-    private reducer: ReduxModuleReducer<TReduxModuleTypeContainer>,
-    private middlewareFactory: MiddlewareFactory<TStoreState, TAction>,
-    private _preloadedState: any,
-    private postConfigure: PostConfigure<TReduxModuleTypeContainer>,
-    private propsInitializer: (inProps: any) => any,
-    private providedProps: ProvidedModuleProps<
+    private readonly reducer: ReduxModuleReducer<TReduxModuleTypeContainer>,
+    private readonly middlewareFactory: MiddlewareFactory<TStoreState, TAction>,
+    private readonly _preloadedState: any,
+    private readonly postConfigure: PostConfigure<TReduxModuleTypeContainer>,
+    private readonly propsInitializer: (inProps: any) => any,
+    private readonly providedProps: ProvidedModuleProps<
       TReduxModuleTypeContainer,
       TReduxModuleTypeContainer['_initializerPropsType']
     >,
     combinedModules: ReduxModule<any>[]
   ) {
-    this.path = this.nameToPath(rawPath);
+    this.path = nameToPath(rawPath);
     this.name = [...this.path].pop() as TName;
     if (!Object.isFrozen(actions)) {
       // ensure action creator has 'this' when destructured
@@ -237,8 +237,7 @@ class ReduxModuleImplementation<
 
   public with(module: ReduxModule<any>) {
     this.combinedModules = this.combinedModules.filter(
-      (m) =>
-        this.nameToPath(m.name).join() !== this.nameToPath(module.name).join()
+      (m) => nameToPath(m.name).join() !== nameToPath(module.name).join()
     );
     const currentPropsInitializer = this.propsInitializer;
     const newPropsInitializer = (props: any) => {
@@ -448,6 +447,7 @@ class ReduxModuleImplementation<
       // expose action creators from all of the modules on the store
       (store as any).actions = actionCreators;
       (store as any).props = initializedProps;
+      (store as any).module = this;
 
       // run post configure functions
       modules.forEach((module) => {
@@ -459,14 +459,17 @@ class ReduxModuleImplementation<
       return store;
     };
     if (options.deferred) {
-      return new ReloadableStoreImpl<TReduxModuleTypeContainer>(storeFactory);
+      return new ReloadableStoreImpl<TReduxModuleTypeContainer>(
+        this,
+        storeFactory
+      );
     }
     return storeFactory();
   }
+}
 
-  private nameToPath(name: string): string[] {
-    return name.split(/\.|\/|->/g);
-  }
+function nameToPath(name: string): string[] {
+  return name.split(/\.|\/|->/g);
 }
 
 /**
@@ -576,7 +579,7 @@ export function createModule<
 >(options: {
   initializer: TInitializer;
 }): ReduxModuleMayRequireInitialization<
-  ReduxModuleTypeContainerWithProps<ReduxModuleTypeContainerUnamed, TProps>
+  ReduxModuleTypeContainerWithProps<ReduxModuleTypeContainerUnnamed, TProps>
 >;
 /**
  * Creates an unamed module with action creators.
@@ -590,7 +593,7 @@ export function createModule<
 }): ReduxModuleMayRequireInitialization<
   ReduxModuleTypeContainerWithActionCreator<
     ReduxModuleTypeContainerWithAction<
-      ReduxModuleTypeContainerUnamed,
+      ReduxModuleTypeContainerUnnamed,
       TActionFromActionCreators
     >,
     TActionCreators
@@ -599,7 +602,7 @@ export function createModule<
 /**
  * Creates an unamed module without options.
  */
-export function createModule(): ReduxModuleFullyInitialized<ReduxModuleTypeContainerUnamed>;
+export function createModule(): ReduxModuleFullyInitialized<ReduxModuleTypeContainerUnnamed>;
 /**
  * createModule implementation
  * @param nameOrOptions

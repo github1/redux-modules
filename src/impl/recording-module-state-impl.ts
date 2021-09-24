@@ -15,7 +15,6 @@ export function RecordingModuleMiddleware<
   TAction extends Action
 >(): ReduxModuleMiddleware<
   ReduxModuleTypeContainerComposite<
-    'recording',
     ReduxModuleTypeContainer<
       'recording',
       RecordingModuleState<TAction>,
@@ -33,7 +32,7 @@ export function RecordingModuleMiddleware<
         (waitCondition) => !waitCondition.isResolved
       )
       .forEach((waitCondition) => {
-        if (waitCondition.predicate(this, action)) {
+        if (waitCondition.predicate(store.getState().recording, action)) {
           waitCondition.resolve();
         }
       });

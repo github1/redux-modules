@@ -12,7 +12,7 @@ export interface RecordingModuleState<TAction extends Action> {
   readonly waitConditions: RecordingModuleWaitCondition<TAction>[];
   find<
     TFindActionType extends TAction['type'],
-    TFoundAction = TAction extends Action<any>
+    TFoundAction = TAction extends Action
       ? TFindActionType extends TAction['type']
         ? TAction
         : never
@@ -30,7 +30,7 @@ export interface RecordingModuleState<TAction extends Action> {
   ): Promise<void>;
   waitFor<
     TFindActionType extends TAction['type'],
-    TFoundAction = TAction extends Action<any>
+    TFoundAction = TAction extends Action
       ? TFindActionType extends TAction['type']
         ? TAction
         : never

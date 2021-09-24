@@ -1,8 +1,10 @@
 import { Action, Dispatch, Observable, Reducer, Unsubscribe } from 'redux';
-import { ReduxModuleTypeContainerCompositeAny } from '../redux-module';
+import {
+  ReduxModule,
+  ReduxModuleTypeContainerCompositeAny,
+} from '../redux-module';
 import { ReduxModuleStore } from '../redux-module-store';
 import { ReloadableStore } from '../reloadable-store';
-import { RestrictToAction } from '../type-helpers';
 
 export class ReloadableStoreImpl<
   TReduxModule extends ReduxModuleTypeContainerCompositeAny,
@@ -13,12 +15,15 @@ export class ReloadableStoreImpl<
 > implements ReloadableStore<TReduxModule>
 {
   private _store: ReduxModuleStore<TReduxModule>;
-  constructor(private readonly factory: () => ReduxModuleStore<TReduxModule>) {}
+  constructor(
+    public readonly module: ReduxModule<TReduxModule>,
+    private readonly factory: () => ReduxModuleStore<TReduxModule>
+  ) {}
   reload(): ReloadableStore<TReduxModule> {
     this._store = this.factory();
     return this;
   }
-  get dispatch(): Dispatch<RestrictToAction<TAction>> {
+  get dispatch(): Dispatch<Extract<TAction, Action>> {
     return this.store.dispatch;
   }
   get actions(): Readonly<TActionCreatorsInStore> {
@@ -34,7 +39,7 @@ export class ReloadableStoreImpl<
     return this.store.subscribe(listener);
   }
   replaceReducer(
-    nextReducer: Reducer<TStoreState, RestrictToAction<TAction>>
+    nextReducer: Reducer<TStoreState, Extract<TAction, Action>>
   ): void {
     this.store.replaceReducer(nextReducer);
   }
