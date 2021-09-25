@@ -272,7 +272,7 @@ describe('redux-modules', () => {
         .asStore().props.something
     ).toEqual('SOME_ACTION');
   });
-  it('can combine modules which require initializatin properties and modules which do not', () => {
+  it('can combine modules which require initialization properties and modules which do not', () => {
     const mod = createModule('test', {
       initializer(props: { something: string }) {
         return props;
@@ -282,6 +282,87 @@ describe('redux-modules', () => {
     type TProps = typeof initialized['_types']['_initializerPropsType'];
     expectType<TProps>({});
     expectType<'asStore' extends keyof typeof initialized ? true : false>(true);
+  });
+  it('can import module action types and store state', () => {
+    const modToImport = createModule('to_import').reduce(
+      (
+        state: { someVal?: string } = {},
+        action: { type: 'IMPORTED_ACTION' }
+      ) => {
+        return { ...state, someVal: action.type };
+      }
+    );
+    const mod = createModule('test', {
+      actionCreators: {
+        someAction(): { type: 'SOME_ACTION' } {
+          return { type: 'SOME_ACTION' };
+        },
+      },
+    })
+      .import(modToImport)
+      .reduce((state: { anotherVal?: string } = {}, action) => {
+        expectType<
+          TypeEqual<
+            typeof action,
+            | {
+                type: 'IMPORTED_ACTION';
+              }
+            | {
+                type: 'SOME_ACTION';
+              }
+          >
+        >(true);
+        return { ...state, anotherVal: action.type };
+      })
+      .on((store) => (next) => (action) => {
+        // imported actions should be available in middleware
+        expectType<
+          TypeEqual<
+            typeof action,
+            | {
+                type: 'IMPORTED_ACTION';
+              }
+            | {
+                type: 'SOME_ACTION';
+              }
+          >
+        >(true);
+        next(action);
+        // imported state should be available in middleware
+        expectType<
+          TypeEqual<
+            ReturnType<typeof store.getState>,
+            {
+              readonly test: {
+                anotherVal?: string;
+              };
+              readonly to_import: {
+                someVal?: string;
+              };
+            }
+          >
+        >(true);
+      });
+    // the public types should not include imports
+    expectType<
+      TypeEqual<
+        typeof mod['_types']['_actionType'],
+        {
+          type: 'SOME_ACTION';
+        }
+      >
+    >(true);
+    const store = mod.asStore();
+    expectType<
+      TypeEqual<
+        ReturnType<typeof store.getState>,
+        {
+          readonly test: {
+            anotherVal?: string;
+          };
+        }
+      >
+    >(true);
   });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')

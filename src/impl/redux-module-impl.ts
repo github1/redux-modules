@@ -259,6 +259,10 @@ class ReduxModuleImplementation<
     ) as any;
   }
 
+  public import(module: ReduxModule<any>) {
+    return this as any;
+  }
+
   public initialize(
     props: ProvidedModuleProps<
       TReduxModuleTypeContainer,

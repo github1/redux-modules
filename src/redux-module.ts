@@ -566,23 +566,14 @@ type InterceptFunctionType<
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
 >;
 
-export interface ReduxModule<
+type WithFunctionType<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> {
-  readonly _types: TReduxModuleTypeContainer;
-  readonly path: TReduxModuleTypeContainer['_pathTupleType'];
-  readonly name: TReduxModuleTypeContainer['_nameType'];
-  readonly actions: TReduxModuleTypeContainer['_actionCreatorType'];
-  configure(
-    configure: PostConfigure<TReduxModuleTypeContainer>
-  ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
-  preloadedState: PreloadedStateFunctionType<TReduxModuleTypeContainer>;
-  reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
-  on: OnFunctionType<TReduxModuleTypeContainer>;
-  intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
-  with<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
+> = IsAny<
+  TReduxModuleTypeContainer['_pathType'],
+  any,
+  <OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
     module: OtherModule
-  ): OtherModule extends ReduxModule<infer TWReduxModule>
+  ) => OtherModule extends ReduxModule<infer TWReduxModule>
     ? TWReduxModule extends ReduxModuleTypeContainerAny
       ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
         ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
@@ -608,7 +599,16 @@ export interface ReduxModule<
             >
           >
       : never
-    : never;
+    : never
+>;
+
+export interface ReduxModule<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> {
+  readonly _types: TReduxModuleTypeContainer;
+  readonly path: TReduxModuleTypeContainer['_pathTupleType'];
+  readonly name: TReduxModuleTypeContainer['_nameType'];
+  readonly actions: TReduxModuleTypeContainer['_actionCreatorType'];
   readonly modules: TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
     any,
     infer TReduxModuleTypeContainerMembers
@@ -617,6 +617,15 @@ export interface ReduxModule<
         ReduxModuleFromReduxModuleTypeContainerHavingPath<TReduxModuleTypeContainerMembers>
       >
     : {};
+  configure(
+    configure: PostConfigure<TReduxModuleTypeContainer>
+  ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
+  preloadedState: PreloadedStateFunctionType<TReduxModuleTypeContainer>;
+  reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
+  on: OnFunctionType<TReduxModuleTypeContainer>;
+  intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
+  with: WithFunctionType<TReduxModuleTypeContainer>;
+  import: WithFunctionType<TReduxModuleTypeContainer>;
 }
 
 type ReduxModuleFromReduxModuleTypeContainerHavingPath<
