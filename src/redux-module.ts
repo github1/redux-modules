@@ -573,18 +573,6 @@ export interface ReduxModule<
   reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
   on: OnFunctionType<TReduxModuleTypeContainer>;
   intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
-  with2<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
-    module: OtherModule
-  ): OtherModule extends ReduxModule<infer TWReduxModule>
-    ? TWReduxModule extends ReduxModuleTypeContainerAny
-      ? ReduxModuleMayRequireInitialization<
-          ReduxModuleTypeContainerCombinedWith<
-            TReduxModuleTypeContainer,
-            TWReduxModule
-          >
-        >
-      : never
-    : never;
   with<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
     module: OtherModule
   ): OtherModule extends ReduxModule<infer TWReduxModule>
