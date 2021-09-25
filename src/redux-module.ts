@@ -281,13 +281,17 @@ export type ReduxModuleTypeContainerNameAndPropsOnly<
   TProps
 >;
 
+type ReduxModuleTypeContainerRemainingPropsFromProvided<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TPropsWhichWereProvided
+> = Optional<
+  TReduxModuleTypeContainer['_initializerPropsType'],
+  keyof TPropsWhichWereProvided
+>;
+
 export type ReduxModuleTypeContainerWithInitializationPropsProvided<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
-  TPropsWhichWereProvided,
-  TRemainingProps = Optional<
-    TReduxModuleTypeContainer['_initializerPropsType'],
-    keyof TPropsWhichWereProvided
-  >
+  TPropsWhichWereProvided
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
   infer ReduxModuleTypeContainerCompositeMembers
@@ -304,7 +308,10 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
     >
   : ReduxModuleTypeContainerWithProps<
       TReduxModuleTypeContainer,
-      TRemainingProps
+      ReduxModuleTypeContainerRemainingPropsFromProvided<
+        TReduxModuleTypeContainer,
+        TPropsWhichWereProvided
+      >
     >;
 
 export type ReduxModuleTypeContainerCompositeAny =

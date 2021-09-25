@@ -212,6 +212,38 @@ describe('redux-modules', () => {
       propD: 'd-val',
     });
   });
+  it('allows partial initialization when combining modules', () => {
+    const mod = createModule('test').with(
+      createModule('test2', {
+        initializer(props: { propA: string; propB?: string }) {
+          return props;
+        },
+      }).initialize({ propA: 'a-val' })
+    );
+    const mod2 = mod.with(
+      createModule('test3', {
+        initializer(props: { propC: string; propD?: string }) {
+          return props;
+        },
+      })
+    );
+    const mod3 = mod2.initialize({ propC: 'c-val' });
+    // should not require initialization because propB and propD are optional
+    expectType<'initialize' extends keyof typeof mod3 ? true : false>(true);
+    expectType<'asStore' extends keyof typeof mod3 ? true : false>(true);
+    const store = mod3.asStore();
+    expectType<
+      TypeEqual<
+        typeof store.props,
+        {
+          readonly propA: string;
+          readonly propB: string;
+          readonly propC: string;
+          readonly propD: string;
+        }
+      >
+    >(true);
+  });
   it('can initialize props with a function', () => {
     expect(
       createModule('test', {

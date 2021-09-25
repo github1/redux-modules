@@ -111,11 +111,6 @@ export type NotAny<
   TIsNotAny = TType
 > = 'asdadsasdasdad' extends TType ? TIsAny : TIsNotAny;
 
-// export type NotAny<TType, TIsNotAny = TType, TIsAny = never> = IsAny<
-//   TIsAny,
-//   TIsNotAny
-// >;
-
 export function wrapInPath(value: any, path: string[]): any {
   const p = [...path];
   const root = {};
@@ -144,9 +139,9 @@ export type Optional<
   T,
   K,
   KT extends keyof T = K extends keyof T ? K : never
-> = T extends never
+> = [T] extends [never]
   ? {}
-  : K extends never
+  : [KT] extends [never]
   ? T
   : Pick<Partial<T>, KT> & Omit<T, KT>;
 
