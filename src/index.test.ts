@@ -6,7 +6,7 @@ import {
   ReduxModuleTypeContainerAny,
 } from './index';
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
-import { Dispatch } from 'redux';
+import { Action, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ReduxModuleTypeContainerCombinedWith } from './redux-module';
 
@@ -377,6 +377,44 @@ describe('redux-modules', () => {
     const store = mod3.asStore();
     expect(store.module.name).toBe('test');
     expect(store.module.modules.mod2.name).toBe('mod2');
+  });
+  it('does not yield an actionType of `any` with combined modules', () => {
+    const mod = createModule('test')
+      .with(
+        createModule('test2', {
+          actionCreators: {
+            doSomething(): { type: 'SOMETHING' } {
+              return { type: 'SOMETHING' };
+            },
+          },
+        })
+      )
+      .with(createModule('test3'))
+      .with(
+        createModule('test4', {
+          actionCreators: {
+            doSomethingElse(): { type: 'SOMETHING_ELSE' } {
+              return { type: 'SOMETHING_ELSE' };
+            },
+          },
+        })
+      )
+      .with(
+        createModule('test5', {
+          actionCreators: {
+            doGenericAction(): Action {
+              return { type: 'something' };
+            },
+          },
+        })
+      );
+    type TAction = typeof mod['_types']['_actionType'];
+    expectType<
+      TypeEqual<
+        TAction,
+        Action | { type: 'SOMETHING' } | { type: 'SOMETHING_ELSE' }
+      >
+    >(true);
   });
   it('exposes combined modules', () => {
     const mod = createModule('test')

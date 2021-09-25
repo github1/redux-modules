@@ -573,7 +573,7 @@ export interface ReduxModule<
   reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
   on: OnFunctionType<TReduxModuleTypeContainer>;
   intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
-  with<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
+  with2<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
     module: OtherModule
   ): OtherModule extends ReduxModule<infer TWReduxModule>
     ? TWReduxModule extends ReduxModuleTypeContainerAny
@@ -583,6 +583,35 @@ export interface ReduxModule<
             TWReduxModule
           >
         >
+      : never
+    : never;
+  with<OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
+    module: OtherModule
+  ): OtherModule extends ReduxModule<infer TWReduxModule>
+    ? TWReduxModule extends ReduxModuleTypeContainerAny
+      ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
+        ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+          ? ReduxModuleMayRequireInitialization<
+              ReduxModuleTypeContainerCombinedWith<
+                TReduxModuleTypeContainer,
+                TWReduxModule
+              >
+            >
+          : ReduxModuleMayRequireInitialization<
+              ReduxModuleTypeContainerCombinedWith<
+                TReduxModuleTypeContainer,
+                ReduxModuleTypeContainerWithAction<
+                  TWReduxModule,
+                  TReduxModuleTypeContainer['_actionType']
+                >
+              >
+            >
+        : ReduxModuleMayRequireInitialization<
+            ReduxModuleTypeContainerCombinedWith<
+              TReduxModuleTypeContainer,
+              TWReduxModule
+            >
+          >
       : never
     : never;
   readonly modules: TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
