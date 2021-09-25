@@ -199,6 +199,8 @@ describe('redux-modules', () => {
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     expectType<'asStore' extends keyof typeof mod ? true : false>(false);
     const mod2 = mod.initialize({ propB: 'b-val', propC: 'c-val' });
+    type TProps = typeof mod2['_types']['_initializerPropsType'];
+    expectType<TProps>({});
     // only remaining prop is optional, can initialize further or create the store
     expectType<'initialize' extends keyof typeof mod2 ? true : false>(true);
     expectType<'asStore' extends keyof typeof mod2 ? true : false>(true);
@@ -237,6 +239,17 @@ describe('redux-modules', () => {
         })
         .asStore().props.something
     ).toEqual('SOME_ACTION');
+  });
+  it('can combine modules which require initializatin properties and modules which do not', () => {
+    const mod = createModule('test', {
+      initializer(props: { something: string }) {
+        return props;
+      },
+    }).with(createModule('test2'));
+    const initialized = mod.initialize({ something: 'a' });
+    type TProps = typeof initialized['_types']['_initializerPropsType'];
+    expectType<TProps>({});
+    expectType<'asStore' extends keyof typeof initialized ? true : false>(true);
   });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')

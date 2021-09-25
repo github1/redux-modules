@@ -302,7 +302,10 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
         TPropsWhichWereProvided
       >
     >
-  : ReduxModuleTypeContainerWithProps<TReduxModuleTypeContainer, TRemainingProps>;
+  : ReduxModuleTypeContainerWithProps<
+      TReduxModuleTypeContainer,
+      TRemainingProps
+    >;
 
 export type ReduxModuleTypeContainerCompositeAny =
   ReduxModuleTypeContainerComposite<
@@ -470,8 +473,9 @@ type OnFunctionType<
             ...store: any
           ) => (...next: any) => (action: infer TMiddlewareActionType) => void
             ? TMiddlewareActionType
-            : TReduxModuleTypeContainer['_actionType']
-        , Action>
+            : TReduxModuleTypeContainer['_actionType'],
+          Action
+        >
       >(
         typeOrHandler: TActionTypeOrMiddleware,
         handler?: TMiddleware
@@ -631,7 +635,10 @@ export interface ReduxModuleRequiresInitialization<
   initialize<TProps>(
     props: ProvidedModuleProps<
       TReduxModuleTypeContainer,
-      MustOnlyHaveKeys<TProps, TReduxModuleTypeContainer['_initializerPropsType']>
+      MustOnlyHaveKeys<
+        TProps,
+        TReduxModuleTypeContainer['_initializerPropsType']
+      >
     >
   ): ReduxModuleMayRequireInitialization<
     ReduxModuleTypeContainerWithInitializationPropsProvided<

@@ -139,7 +139,7 @@ export type Optional<
   T,
   K,
   KT extends keyof T = K extends keyof T ? K : never
-> = Pick<Partial<T>, KT> & Omit<T, KT>;
+> = T extends never ? {} : Pick<Partial<T>, KT> & Omit<T, KT>;
 
 function isObject(item: any): boolean {
   return item && typeof item === 'object' && !Array.isArray(item);
