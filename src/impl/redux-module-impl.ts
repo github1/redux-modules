@@ -23,10 +23,11 @@ import {
   ReduxModuleTypeContainerNameAndPropsOnly,
   ReduxModuleTypeContainerUnnamed,
   Interceptor,
-  ReduxModuleTypeContainerCompositeAny,
   ReduxModuleTypeContainerWithAction,
   ReduxModuleTypeContainerWithActionCreator,
   ReduxModuleTypeContainerWithProps,
+  ReduxModuleTypeContainerAny,
+  ReduxModuleTypeContainerWithImportPathsExcluded,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -68,7 +69,7 @@ function runReducer(
 }
 
 class ReduxModuleImplementation<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TName extends string = TReduxModuleTypeContainer['_nameType'],
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
@@ -82,7 +83,7 @@ class ReduxModuleImplementation<
   public readonly name: TName;
   public readonly path: string[];
   public readonly actions: Readonly<any>;
-  public readonly _types: TReduxModuleTypeContainer;
+  public readonly _types: ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>;
   private combinedModules: Readonly<ReduxModule<any>[]>;
   constructor(
     private readonly rawPath: string,
@@ -464,7 +465,7 @@ class ReduxModuleImplementation<
     };
     if (options.deferred) {
       return new ReloadableStoreImpl<TReduxModuleTypeContainer>(
-        this,
+        this as any,
         storeFactory
       );
     }
