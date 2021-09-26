@@ -6,22 +6,17 @@ import {
 } from '../recording-module';
 import { Handler, Predicate } from '../utils';
 import { ReduxModuleMiddleware } from '../redux-module-middleware';
-import {
-  ReduxModuleTypeContainerComposite,
-  ReduxModuleTypeContainer,
-} from '../redux-module';
+import { ReduxModuleTypeContainer } from '../redux-module';
 
 export function RecordingModuleMiddleware<
   TAction extends Action
 >(): ReduxModuleMiddleware<
-  ReduxModuleTypeContainerComposite<
-    ReduxModuleTypeContainer<
-      'recording',
-      RecordingModuleState<TAction>,
-      TAction,
-      any,
-      any
-    >
+  ReduxModuleTypeContainer<
+    'recording',
+    RecordingModuleState<TAction>,
+    TAction,
+    any,
+    any
   >
 > {
   return (store) => (next) => (action) => {

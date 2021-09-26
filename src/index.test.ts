@@ -315,6 +315,7 @@ describe('redux-modules', () => {
         return { ...state, anotherVal: action.type };
       })
       .on((store) => (next) => (action) => {
+        next(action);
         // imported actions should be available in middleware
         expectType<
           TypeEqual<
@@ -327,7 +328,6 @@ describe('redux-modules', () => {
               }
           >
         >(true);
-        next(action);
         // imported state should be available in middleware
         expectType<
           TypeEqual<
@@ -343,7 +343,9 @@ describe('redux-modules', () => {
           >
         >(true);
       });
+    expectType<typeof mod['_types']['_importPaths']>('to_import');
     // the public types should not include imports
+    expectType<typeof mod['_types']['_modules']['_pathType']>('test');
     expectType<
       TypeEqual<
         typeof mod['_types']['_actionType'],

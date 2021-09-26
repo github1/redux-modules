@@ -74,6 +74,7 @@ type ReduxModuleTypeContainerStateIsUndefined<
 export type ReduxModuleTypeContainerComposite<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TReduxModuleTypeContainerMembers extends ReduxModuleTypeContainerAny = never,
+  TReduxModuleTypeContainerImportPaths extends string = any,
   TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainerAny =
     | TReduxModuleTypeContainer
     | TReduxModuleTypeContainerMembers,
@@ -89,35 +90,23 @@ export type ReduxModuleTypeContainerComposite<
 > & {
   _modules: TReduxModuleTypeContainerMembersAll;
   _members: TReduxModuleTypeContainerMembers;
-  // TODO handle ReduxModuleTypeContainerComposite types in the union type
   _storeStateType: UnionToIntersection<
-    TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainer<
-      infer TReduxModuleTypeContainerMembersAllPath,
-      infer TReduxModuleTypeContainerMembersAllState,
-      any,
-      any,
-      any
-    >
+    TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainerAny
       ? StoreStateAtPath<
-          TReduxModuleTypeContainerMembersAllState,
-          TReduxModuleTypeContainerMembersAllPath
+          TReduxModuleTypeContainerMembersAll['_stateType'],
+          TReduxModuleTypeContainerMembersAll['_pathType']
         >
       : never
   >;
   _storeActionCreatorsType: UnionToIntersection<
-    TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainer<
-      infer TReduxModuleTypeContainerMembersAllPath,
-      any,
-      any,
-      infer TReduxModuleTypeContainerMembersAllActionCreator,
-      any
-    >
+    TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainerAny
       ? StoreStateAtPath<
-          TReduxModuleTypeContainerMembersAllActionCreator,
-          TReduxModuleTypeContainerMembersAllPath
+          TReduxModuleTypeContainerMembersAll['_actionCreatorType'],
+          TReduxModuleTypeContainerMembersAll['_pathType']
         >
       : never
   >;
+  _importPaths: TReduxModuleTypeContainerImportPaths;
 };
 
 export type ReduxModuleTypeContainerUnnamed = ReduxModuleTypeContainer<
@@ -126,19 +115,38 @@ export type ReduxModuleTypeContainerUnnamed = ReduxModuleTypeContainer<
   undefined // action
 >;
 
+export type ReduxModuleTypeContainerWithImportPathsExcluded<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
+  infer TReduxModuleTypeContainerCompositePrimary,
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
+>
+  ? false extends IsStrictlyAny<TReduxModuleTypeContainerCompositeImportPaths>
+    ? ReduxModuleTypeContainerComposite<
+        TReduxModuleTypeContainerCompositePrimary,
+        TReduxModuleTypeContainerCompositeMembers['_pathType'] extends TReduxModuleTypeContainerCompositeImportPaths
+          ? never
+          : TReduxModuleTypeContainerCompositeMembers
+      >
+    : TReduxModuleTypeContainer
+  : TReduxModuleTypeContainer;
+
 type ReduxModuleTypeContainerWithPath<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TPath extends string
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithPath<
         TReduxModuleTypeContainerCompositePrimary,
         TPath
       >,
-      TReduxModuleTypeContainerCompositeMembers
+      TReduxModuleTypeContainerCompositeMembers,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TPath,
@@ -153,14 +161,16 @@ type ReduxModuleTypeContainerWithState<
   TState
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithState<
         TReduxModuleTypeContainerCompositePrimary,
         TState
       >,
-      TReduxModuleTypeContainerCompositeMembers
+      TReduxModuleTypeContainerCompositeMembers,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TReduxModuleTypeContainer['_pathType'],
@@ -175,14 +185,16 @@ export type ReduxModuleTypeContainerWithAction<
   TAction extends Action
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithAction<
         TReduxModuleTypeContainerCompositePrimary,
         TAction
       >,
-      TReduxModuleTypeContainerCompositeMembers
+      TReduxModuleTypeContainerCompositeMembers,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TReduxModuleTypeContainer['_pathType'],
@@ -197,7 +209,8 @@ export type ReduxModuleTypeContainerWithActionMatchingSubstring<
   TSubString extends string
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithAction<
@@ -213,7 +226,8 @@ export type ReduxModuleTypeContainerWithActionMatchingSubstring<
           TReduxModuleTypeContainerCompositeMembers['_actionType'],
           TSubString
         >
-      >
+      >,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TReduxModuleTypeContainer['_pathType'],
@@ -231,14 +245,16 @@ export type ReduxModuleTypeContainerWithActionCreator<
   TActionCreator extends Record<string, (...args: any) => Action>
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithActionCreator<
         TReduxModuleTypeContainerCompositePrimary,
         TActionCreator
       >,
-      TReduxModuleTypeContainerCompositeMembers
+      TReduxModuleTypeContainerCompositeMembers,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TReduxModuleTypeContainer['_pathType'],
@@ -253,14 +269,16 @@ export type ReduxModuleTypeContainerWithProps<
   TProps
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer TReduxModuleTypeContainerCompositeMembers
+  infer TReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithProps<
         TReduxModuleTypeContainerCompositePrimary,
         TProps
       >,
-      TReduxModuleTypeContainerCompositeMembers
+      TReduxModuleTypeContainerCompositeMembers,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainer<
       TReduxModuleTypeContainer['_pathType'],
@@ -294,7 +312,8 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
   TPropsWhichWereProvided
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
   infer TReduxModuleTypeContainerCompositePrimary,
-  infer ReduxModuleTypeContainerCompositeMembers
+  infer ReduxModuleTypeContainerCompositeMembers,
+  infer TReduxModuleTypeContainerCompositeImportPaths
 >
   ? ReduxModuleTypeContainerComposite<
       ReduxModuleTypeContainerWithInitializationPropsProvided<
@@ -304,7 +323,8 @@ export type ReduxModuleTypeContainerWithInitializationPropsProvided<
       ReduxModuleTypeContainerWithInitializationPropsProvided<
         ReduxModuleTypeContainerCompositeMembers,
         TPropsWhichWereProvided
-      >
+      >,
+      TReduxModuleTypeContainerCompositeImportPaths
     >
   : ReduxModuleTypeContainerWithProps<
       TReduxModuleTypeContainer,
@@ -319,6 +339,49 @@ export type ReduxModuleTypeContainerCompositeAny =
     ReduxModuleTypeContainerAny,
     ReduxModuleTypeContainerAny
   >;
+
+export type ReduxModuleTypeContainerWithImport<
+  TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerSource extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerComposite<
+  infer TTargetReduxModule,
+  infer TTargetReduxModules,
+  infer TTargetReduxModuleImportPaths
+>
+  ? // Target is a composite module
+    TReduxModuleTypeContainerSource extends ReduxModuleTypeContainerComposite<
+      infer TSourceReduxModule,
+      infer TSourceReduxModules
+    >
+    ? // Source is a composite module
+      ReduxModuleTypeContainerComposite<
+        TTargetReduxModule,
+        TTargetReduxModules | TSourceReduxModule | TSourceReduxModules,
+        | TTargetReduxModuleImportPaths
+        | TSourceReduxModule['_pathType']
+        | TSourceReduxModules['_pathType']
+      >
+    : // Source is not a composite module
+    TTargetReduxModule['_pathType'] extends TReduxModuleTypeContainerSource['_pathType']
+    ? // If import has same path as primary, do nothing
+      TReduxModuleTypeContainerTarget
+    : // path does not match primary, import it to composite
+      ReduxModuleTypeContainerComposite<
+        TTargetReduxModule,
+        TTargetReduxModules | TReduxModuleTypeContainerSource,
+        | TTargetReduxModuleImportPaths
+        | TReduxModuleTypeContainerSource['_pathType']
+      >
+  : // Target is not a composite module
+  TReduxModuleTypeContainerTarget['_pathType'] extends TReduxModuleTypeContainerSource['_pathType']
+  ? // If import has same path as primary, do nothing
+    TReduxModuleTypeContainerTarget
+  : // Source and Target have different paths
+    ReduxModuleTypeContainerComposite<
+      TReduxModuleTypeContainerTarget,
+      TReduxModuleTypeContainerSource,
+      TReduxModuleTypeContainerSource['_pathType']
+    >;
 
 export type ReduxModuleTypeContainerCombinedWith<
   TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerAny,
@@ -602,14 +665,51 @@ type WithFunctionType<
     : never
 >;
 
-export interface ReduxModule<
+type ImportFunctionType<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = IsAny<
+  TReduxModuleTypeContainer['_pathType'],
+  any,
+  <OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
+    module: OtherModule
+  ) => OtherModule extends ReduxModule<infer TWReduxModule>
+    ? TWReduxModule extends ReduxModuleTypeContainerAny
+      ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
+        ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+          ? ReduxModuleMayRequireInitialization<
+              ReduxModuleTypeContainerWithImport<
+                TReduxModuleTypeContainer,
+                TWReduxModule
+              >
+            >
+          : ReduxModuleMayRequireInitialization<
+              ReduxModuleTypeContainerWithImport<
+                TReduxModuleTypeContainer,
+                ReduxModuleTypeContainerWithAction<
+                  TWReduxModule,
+                  TReduxModuleTypeContainer['_actionType']
+                >
+              >
+            >
+        : ReduxModuleMayRequireInitialization<
+            ReduxModuleTypeContainerWithImport<
+              TReduxModuleTypeContainer,
+              TWReduxModule
+            >
+          >
+      : never
+    : never
+>;
+
+export interface ReduxModule<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>
 > {
-  readonly _types: TReduxModuleTypeContainer;
+  readonly _types: TReduxModuleTypeContainerWithImportPathsExcluded;
   readonly path: TReduxModuleTypeContainer['_pathTupleType'];
   readonly name: TReduxModuleTypeContainer['_nameType'];
-  readonly actions: TReduxModuleTypeContainer['_actionCreatorType'];
-  readonly modules: TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
+  readonly actions: TReduxModuleTypeContainerWithImportPathsExcluded['_actionCreatorType'];
+  readonly modules: TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerComposite<
     any,
     infer TReduxModuleTypeContainerMembers
   >
@@ -625,7 +725,7 @@ export interface ReduxModule<
   on: OnFunctionType<TReduxModuleTypeContainer>;
   intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
   with: WithFunctionType<TReduxModuleTypeContainer>;
-  import: WithFunctionType<TReduxModuleTypeContainer>;
+  import: ImportFunctionType<TReduxModuleTypeContainer>;
 }
 
 type ReduxModuleFromReduxModuleTypeContainerHavingPath<
@@ -685,8 +785,9 @@ export interface ReduxModuleRequiresInitialization<
  * Interface for a redux module which is fully initialized.
  */
 export interface ReduxModuleFullyInitialized<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> extends ReduxModule<TReduxModuleTypeContainer> {
+  TReduxModuleTypeContainer_z extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer_z>
+> extends ReduxModule<TReduxModuleTypeContainer_z> {
   asStore<
     TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
       TReduxModuleTypeContainer['_storeStateType']
