@@ -42,8 +42,6 @@ export type ReduxModuleTypeContainer<
   _actionType: TAction;
   _actionCreatorType: TActionCreators;
   _initializerPropsType: TProps;
-  _storeActionCreatorsWithLocalType: TActionCreators &
-    StoreStateAtPath<TActionCreators, TPath>;
 };
 
 export type ReduxModuleTypeContainerStoreState<
@@ -75,6 +73,11 @@ export type ReduxModuleTypeContainerStoreActionCreator<
         TReduxModuleTypeContainer['_pathType']
       >
 >;
+
+export type ReduxModuleTypeContainerStoreActionCreatorWithLocal<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainer['_actionCreatorType'] &
+  ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>;
 
 export type ReduxModuleTypeContainerAny = ReduxModuleTypeContainer<
   any, // path
@@ -770,7 +773,7 @@ export type ProvidedModuleProps<
   TProps = any
 > =
   | ((context?: {
-      actions: TReduxModuleTypeContainer['_storeActionCreatorsWithLocalType'];
+      actions: ReduxModuleTypeContainerStoreActionCreatorWithLocal<TReduxModuleTypeContainer>;
     }) => TProps)
   | TProps;
 

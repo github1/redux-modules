@@ -3,6 +3,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import {
   ReduxModuleTypeContainerAny,
   ReduxModuleTypeContainerStoreState,
+  ReduxModuleTypeContainerStoreActionCreatorWithLocal,
 } from './redux-module';
 
 export interface ReduxModuleMiddleware<
@@ -23,7 +24,7 @@ export interface ReduxModuleMiddleware<
   (
     api: MiddlewareAPI<TDispatch, TStoreStateFinal> & {
       actions: Readonly<
-        TReduxModuleTypeContainer['_storeActionCreatorsWithLocalType']
+        ReduxModuleTypeContainerStoreActionCreatorWithLocal<TReduxModuleTypeContainer>
       >;
       props: Readonly<
         Required<TReduxModuleTypeContainer['_initializerPropsType']>
