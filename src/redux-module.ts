@@ -41,7 +41,6 @@ export type ReduxModuleTypeContainer<
   _stateType: TState;
   _actionType: TAction;
   _actionCreatorType: TActionCreators;
-  _initializerRequiredPropsType: Required<TProps>;
   _initializerPropsType: TProps;
   _storeStateType: StoreStateAtPath<TState, TPath>;
   _storeActionCreatorsType: StoreStateAtPath<TActionCreators, TPath>;
@@ -581,7 +580,11 @@ export type Interceptor<
   TProps
 > = (
   action: TAction,
-  context: { state: TStoreState; actions: TActionCreators; props: TProps }
+  context: {
+    state: TStoreState;
+    actions: TActionCreators;
+    props: TProps;
+  }
 ) => void | TAction | TAction[] | ThunkAction<any, TStoreState, any, TAction>;
 
 type InterceptFunctionType<
@@ -590,7 +593,7 @@ type InterceptFunctionType<
     Action,
     TReduxModuleTypeContainer['_storeStateType'],
     TReduxModuleTypeContainer['_storeActionCreatorsType'],
-    TReduxModuleTypeContainer['_initializerRequiredPropsType']
+    TReduxModuleTypeContainer['_initializerPropsType']
   >
 > = IsAny<
   TReduxModuleTypeContainer['_pathType'],
@@ -599,7 +602,7 @@ type InterceptFunctionType<
       TReduxModuleTypeContainer['_actionType'],
       TReduxModuleTypeContainer['_storeStateType'],
       TReduxModuleTypeContainer['_storeActionCreatorsType'],
-      TReduxModuleTypeContainer['_initializerRequiredPropsType']
+      TReduxModuleTypeContainer['_initializerPropsType']
     >
   ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
   true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
@@ -624,7 +627,7 @@ type InterceptFunctionType<
           TReduxModuleTypeContainer['_actionType'],
           TReduxModuleTypeContainer['_storeStateType'],
           TReduxModuleTypeContainer['_storeActionCreatorsType'],
-          TReduxModuleTypeContainer['_initializerRequiredPropsType']
+          TReduxModuleTypeContainer['_initializerPropsType']
         >
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
 >;

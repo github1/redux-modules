@@ -15,5 +15,5 @@ export type ReduxModuleStore<
   >;
   module: ReduxModule<TReduxModuleTypeContainer>;
   actions: Readonly<TReduxModuleTypeContainer['_storeActionCreatorsType']>;
-  props: Readonly<TReduxModuleTypeContainer['_initializerRequiredPropsType']>;
+  props: Readonly<Required<TReduxModuleTypeContainer['_initializerPropsType']>>;
 };

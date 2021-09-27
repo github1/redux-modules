@@ -9,12 +9,20 @@ export interface ReduxModuleMiddleware<
     TStoreStateFinal,
     any,
     TReduxModuleTypeContainer['_actionType']
-  > = ThunkDispatch<TStoreStateFinal, any, TReduxModuleTypeContainer['_actionType']>
+  > = ThunkDispatch<
+    TStoreStateFinal,
+    any,
+    TReduxModuleTypeContainer['_actionType']
+  >
 > {
   (
     api: MiddlewareAPI<TDispatch, TStoreStateFinal> & {
-      actions: Readonly<TReduxModuleTypeContainer['_storeActionCreatorsWithLocalType']>;
-      props: Readonly<TReduxModuleTypeContainer['_initializerRequiredPropsType']>;
+      actions: Readonly<
+        TReduxModuleTypeContainer['_storeActionCreatorsWithLocalType']
+      >;
+      props: Readonly<
+        Required<TReduxModuleTypeContainer['_initializerPropsType']>
+      >;
     }
   ): (
     next: Dispatch<AnyAction>

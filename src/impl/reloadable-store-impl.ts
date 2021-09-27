@@ -7,7 +7,7 @@ export class ReloadableStoreImpl<
   TReduxModule extends ReduxModuleTypeContainerAny,
   TAction extends Action | never = TReduxModule['_actionType'],
   TActionCreatorsInStore = TReduxModule['_storeActionCreatorsType'],
-  TInitializerPropTypes = TReduxModule['_initializerRequiredPropsType'],
+  TInitializerPropTypes = Required<TReduxModule['_initializerPropsType']>,
   TStoreState = TReduxModule['_storeStateType']
 > implements ReloadableStore<TReduxModule>
 {
