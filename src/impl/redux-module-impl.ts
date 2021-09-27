@@ -15,6 +15,7 @@ import thunk, { ThunkDispatch } from 'redux-thunk';
 import { ReloadableStoreImpl } from './reloadable-store-impl';
 import {
   ReduxModule,
+  ReduxModuleTypeContainerStoreState,
   ReduxModuleRequiresInitialization,
   ReduxModuleFullyInitialized,
   ReduxModuleMayRequireInitialization,
@@ -74,7 +75,7 @@ class ReduxModuleImplementation<
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
   TProps = TReduxModuleTypeContainer['_initializerPropsType'],
-  TStoreState = TReduxModuleTypeContainer['_storeStateType']
+  TStoreState = ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
 > implements
     ReduxModule<TReduxModuleTypeContainer>,
     ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>,
