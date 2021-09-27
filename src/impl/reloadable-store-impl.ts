@@ -3,24 +3,27 @@ import {
   ReduxModule,
   ReduxModuleTypeContainerAny,
   ReduxModuleTypeContainerStoreState,
+  ReduxModuleTypeContainerStoreActionCreator,
 } from '../redux-module';
 import { ReduxModuleStore } from '../redux-module-store';
 import { ReloadableStore } from '../reloadable-store';
 
 export class ReloadableStoreImpl<
-  TReduxModule extends ReduxModuleTypeContainerAny,
-  TAction extends Action | never = TReduxModule['_actionType'],
-  TActionCreatorsInStore = TReduxModule['_storeActionCreatorsType'],
-  TInitializerPropTypes = Required<TReduxModule['_initializerPropsType']>,
-  TStoreState = ReduxModuleTypeContainerStoreState<TReduxModule>
-> implements ReloadableStore<TReduxModule>
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
+  TActionCreatorsInStore extends ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer> = ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
+  TInitializerPropTypes extends Required<
+    TReduxModuleTypeContainer['_initializerPropsType']
+  > = Required<TReduxModuleTypeContainer['_initializerPropsType']>,
+  TStoreState extends ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer> = ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
+> implements ReloadableStore<TReduxModuleTypeContainer>
 {
-  private _store: ReduxModuleStore<TReduxModule>;
+  private _store: ReduxModuleStore<TReduxModuleTypeContainer>;
   constructor(
-    public readonly module: ReduxModule<TReduxModule>,
-    private readonly factory: () => ReduxModuleStore<TReduxModule>
+    public readonly module: ReduxModule<TReduxModuleTypeContainer>,
+    private readonly factory: () => ReduxModuleStore<TReduxModuleTypeContainer>
   ) {}
-  reload(): ReloadableStore<TReduxModule> {
+  reload(): ReloadableStore<TReduxModuleTypeContainer> {
     this._store = this.factory();
     return this;
   }
@@ -47,7 +50,7 @@ export class ReloadableStoreImpl<
   [Symbol.observable](): Observable<TStoreState> {
     return this.store[Symbol.observable]();
   }
-  private get store(): ReduxModuleStore<TReduxModule> {
+  private get store(): ReduxModuleStore<TReduxModuleTypeContainer> {
     if (!this._store) {
       this.reload();
     }

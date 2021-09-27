@@ -4,6 +4,7 @@ import {
   ReduxModule,
   ReduxModuleTypeContainerAny,
   ReduxModuleTypeContainerStoreState,
+  ReduxModuleTypeContainerStoreActionCreator,
 } from '.';
 
 export type ReduxModuleStore<
@@ -18,6 +19,8 @@ export type ReduxModuleStore<
     TReduxModuleTypeContainer['_actionType']
   >;
   module: ReduxModule<TReduxModuleTypeContainer>;
-  actions: Readonly<TReduxModuleTypeContainer['_storeActionCreatorsType']>;
+  actions: Readonly<
+    ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>
+  >;
   props: Readonly<Required<TReduxModuleTypeContainer['_initializerPropsType']>>;
 };

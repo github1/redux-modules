@@ -257,7 +257,7 @@ class ReduxModuleImplementation<
       this.postConfigure,
       newPropsInitializer,
       this.providedProps,
-      [...this.combinedModules, module]
+      [...this.combinedModules, module as any]
     ) as any;
   }
 
@@ -458,7 +458,7 @@ class ReduxModuleImplementation<
       // run post configure functions
       modules.forEach((module) => {
         if (module.postConfigure) {
-          module.postConfigure(store);
+          module.postConfigure(store as any);
         }
       });
 

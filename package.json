@@ -3,7 +3,7 @@
   "private": false,
   "version": "0.4.19",
   "description": "An implementation of the [redux modules](https://github.com/erikras/ducks-modular-redux) pattern to modularize redux reducers, middleware and action creators",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rm -rf ./dist",

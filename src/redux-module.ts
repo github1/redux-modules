@@ -42,7 +42,6 @@ export type ReduxModuleTypeContainer<
   _actionType: TAction;
   _actionCreatorType: TActionCreators;
   _initializerPropsType: TProps;
-  _storeActionCreatorsType: StoreStateAtPath<TActionCreators, TPath>;
   _storeActionCreatorsWithLocalType: TActionCreators &
     StoreStateAtPath<TActionCreators, TPath>;
 };
@@ -58,6 +57,21 @@ export type ReduxModuleTypeContainerStoreState<
       : never
     : StoreStateAtPath<
         TReduxModuleTypeContainer['_stateType'],
+        TReduxModuleTypeContainer['_pathType']
+      >
+>;
+
+export type ReduxModuleTypeContainerStoreActionCreator<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = UnionToIntersection<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
+    ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
+      ? ReduxModuleTypeContainerStoreActionCreator<
+          TReduxModuleTypeContainer['_modules']
+        >
+      : never
+    : StoreStateAtPath<
+        TReduxModuleTypeContainer['_actionCreatorType'],
         TReduxModuleTypeContainer['_pathType']
       >
 >;
@@ -103,14 +117,6 @@ export type ReduxModuleTypeContainerComposite<
 > & {
   _modules: TReduxModuleTypeContainerMembersAll;
   _members: TReduxModuleTypeContainerMembers;
-  _storeActionCreatorsType: UnionToIntersection<
-    TReduxModuleTypeContainerMembersAll extends ReduxModuleTypeContainerAny
-      ? StoreStateAtPath<
-          TReduxModuleTypeContainerMembersAll['_actionCreatorType'],
-          TReduxModuleTypeContainerMembersAll['_pathType']
-        >
-      : never
-  >;
   _importPaths: TReduxModuleTypeContainerImportPaths;
 };
 
@@ -598,7 +604,7 @@ type InterceptFunctionType<
   TInterceptor extends Interceptor<Action, any, any, any> = Interceptor<
     Action,
     ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
-    TReduxModuleTypeContainer['_storeActionCreatorsType'],
+    ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
     TReduxModuleTypeContainer['_initializerPropsType']
   >
 > = IsAny<
@@ -607,7 +613,7 @@ type InterceptFunctionType<
     interceptor: Interceptor<
       TReduxModuleTypeContainer['_actionType'],
       ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
-      TReduxModuleTypeContainer['_storeActionCreatorsType'],
+      ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
       TReduxModuleTypeContainer['_initializerPropsType']
     >
   ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
@@ -632,7 +638,7 @@ type InterceptFunctionType<
         interceptor: Interceptor<
           TReduxModuleTypeContainer['_actionType'],
           ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
-          TReduxModuleTypeContainer['_storeActionCreatorsType'],
+          ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
           TReduxModuleTypeContainer['_initializerPropsType']
         >
       ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
