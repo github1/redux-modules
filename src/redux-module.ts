@@ -119,7 +119,6 @@ export type ReduxModuleTypeContainerComposite<
   TReduxModuleTypeContainerMembersAllProps
 > & {
   _modules: TReduxModuleTypeContainerMembersAll;
-  _members: TReduxModuleTypeContainerMembers;
   _importPaths: TReduxModuleTypeContainerImportPaths;
 };
 
