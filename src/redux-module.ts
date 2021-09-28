@@ -169,7 +169,7 @@ type ReduxModuleTypeContainerWithPath<
       TReduxModuleTypeContainer['_initializerPropsType']
     >;
 
-type ReduxModuleTypeContainerWithState<
+export type ReduxModuleTypeContainerWithState<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TState
 > = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
@@ -445,147 +445,143 @@ export type ReduxModuleTypeContainerCombinedWith<
  * ReduxModule function types
  */
 type PreloadedStateFunctionType<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  (
-    preloadedState: any
-  ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
-  true extends ReduxModuleTypeContainerStateIsUndefined<TReduxModuleTypeContainer>
-    ? <TPreloadedState>(
-        preloadedState: TPreloadedState
-      ) => ReduxModuleMayRequireInitialization<
-        ReduxModuleTypeContainerWithState<
-          TReduxModuleTypeContainer,
-          TPreloadedState
-        >
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerStateIsUndefined = ReduxModuleTypeContainerStateIsUndefined<TReduxModuleTypeContainer>
+> = true extends TReduxModuleTypeContainerStateIsUndefined
+  ? <TPreloadedState>(
+      preloadedState: TPreloadedState
+    ) => ReduxModuleMayRequireInitialization<
+      ReduxModuleTypeContainerWithState<
+        TReduxModuleTypeContainer,
+        TPreloadedState
       >
-    : (
-        preloadedState: Partial<TReduxModuleTypeContainer['_stateType']>
-      ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
->;
+    >
+  : (
+      preloadedState: Partial<TReduxModuleTypeContainer['_stateType']>
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
 
 type ReduceFunctionType<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  (
-    reducer: ReduxModuleReducer<ReduxModuleTypeContainerCompositeAny>
-  ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
-  true extends $AND<
-    TypeEqual<undefined, TReduxModuleTypeContainer['_stateType']>,
-    TypeEqual<undefined, TReduxModuleTypeContainer['_actionType']>
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerPathIsAny = IsStrictlyAny<
+    TReduxModuleTypeContainer['_pathType']
+  >,
+  TReduxModuleTypeContainerStateIsUndefined = TypeEqual<
+    undefined,
+    TReduxModuleTypeContainer['_stateType']
+  >,
+  TReduxModuleTypeContainerActionIsUndefined = TypeEqual<
+    undefined,
+    TReduxModuleTypeContainer['_actionType']
+  >,
+  TReduxModuleTypeContainerStateAndActionAreUndefined = $AND<
+    TReduxModuleTypeContainerStateIsUndefined,
+    TReduxModuleTypeContainerActionIsUndefined
   >
-    ? // TState and TAction are undefined
-      <
-        TReducer extends ReduxModuleReducer<
-          ReduxModuleTypeContainerWithAction<
-            ReduxModuleTypeContainerWithState<TReduxModuleTypeContainer, any>,
-            any
-          >
-        >,
-        TReducerState = StateFromReducer<TReducer>,
-        TReducerAction extends Action = ActionFromReducer<TReducer>
-      >(
-        reducer: TReducer
-      ) => ReduxModuleMayRequireInitialization<
+> = true extends TReduxModuleTypeContainerPathIsAny
+  ? (
+      reducer: ReduxModuleReducer<ReduxModuleTypeContainerCompositeAny>
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
+  : true extends TReduxModuleTypeContainerStateAndActionAreUndefined
+  ? // TState and TAction are undefined
+    <
+      TReducer extends ReduxModuleReducer<
         ReduxModuleTypeContainerWithAction<
-          ReduxModuleTypeContainerWithState<
-            TReduxModuleTypeContainer,
-            TReducerState
-          >,
-          TReducerAction
+          ReduxModuleTypeContainerWithState<TReduxModuleTypeContainer, any>,
+          any
         >
-      >
-    : true extends TypeEqual<undefined, TReduxModuleTypeContainer['_stateType']>
-    ? // TState is undefined, infer it from TReducer
-      <
-        TReducer extends ReduxModuleReducer<
-          ReduxModuleTypeContainerWithState<TReduxModuleTypeContainer, any>
-        >,
-        TReducerState = StateFromReducer<TReducer>
-      >(
-        reducer: TReducer
-      ) => ReduxModuleMayRequireInitialization<
+      >,
+      TReducerState = StateFromReducer<TReducer>,
+      TReducerAction extends Action = ActionFromReducer<TReducer>
+    >(
+      reducer: TReducer
+    ) => ReduxModuleMayRequireInitialization<
+      ReduxModuleTypeContainerWithAction<
         ReduxModuleTypeContainerWithState<
           TReduxModuleTypeContainer,
           TReducerState
-        >
-      >
-    : true extends TypeEqual<
-        undefined,
-        TReduxModuleTypeContainer['_actionType']
-      >
-    ? // TAction is undefined, infer TAction from TReducer
-      <
-        TReducer extends ReduxModuleReducer<
-          ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
         >,
-        TReducerAction extends Action = ActionFromReducer<TReducer>
-      >(
-        reducer: TReducer
-      ) => ReduxModuleMayRequireInitialization<
-        ReduxModuleTypeContainerWithAction<
-          TReduxModuleTypeContainer,
-          TReducerAction
-        >
+        TReducerAction
       >
-    : // TReducer should conform to existing types
-      (
-        reducer: ReduxModuleReducer<TReduxModuleTypeContainer>
-      ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
->;
+    >
+  : true extends TReduxModuleTypeContainerStateIsUndefined
+  ? // TState is undefined, infer it from TReducer
+    <
+      TReducer extends ReduxModuleReducer<
+        ReduxModuleTypeContainerWithState<TReduxModuleTypeContainer, any>
+      >,
+      TReducerState = StateFromReducer<TReducer>
+    >(
+      reducer: TReducer
+    ) => ReduxModuleMayRequireInitialization<
+      ReduxModuleTypeContainerWithState<
+        TReduxModuleTypeContainer,
+        TReducerState
+      >
+    >
+  : true extends TypeEqual<undefined, TReduxModuleTypeContainer['_actionType']>
+  ? // TAction is undefined, infer TAction from TReducer
+    <
+      TReducer extends ReduxModuleReducer<
+        ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
+      >,
+      TReducerAction extends Action = ActionFromReducer<TReducer>
+    >(
+      reducer: TReducer
+    ) => ReduxModuleMayRequireInitialization<
+      ReduxModuleTypeContainerWithAction<
+        TReduxModuleTypeContainer,
+        TReducerAction
+      >
+    >
+  : // TReducer should conform to existing types
+    (
+      reducer: ReduxModuleReducer<TReduxModuleTypeContainer>
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
 
 type OnFunctionType<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  (
-    typeOrHandler: ReduxModuleMiddleware<TReduxModuleTypeContainer> | string,
-    handler?: ReduxModuleMiddleware<TReduxModuleTypeContainer>
-  ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
-  true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
-    ? // infer TAction from TMiddleware
-      <
-        TMiddleware extends ReduxModuleMiddleware<
-          ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
-        >,
-        TActionTypeOrMiddleware extends TMiddleware | string,
-        TActionFromMiddleware extends Action = Extract<
-          TActionTypeOrMiddleware extends (
-            ...store: any
-          ) => (...next: any) => (action: infer TMiddlewareActionType) => void
-            ? TMiddlewareActionType
-            : TReduxModuleTypeContainer['_actionType'],
-          Action
-        >
-      >(
-        typeOrHandler: TActionTypeOrMiddleware,
-        handler?: TMiddleware
-      ) => ReduxModuleMayRequireInitialization<
-        ReduxModuleTypeContainerWithAction<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerActionIsUndefined = ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+> = true extends TReduxModuleTypeContainerActionIsUndefined
+  ? // infer TAction from TMiddleware
+    <
+      TMiddleware extends ReduxModuleMiddleware<
+        ReduxModuleTypeContainerWithAction<TReduxModuleTypeContainer, any>
+      >,
+      TActionTypeOrMiddleware extends TMiddleware | string,
+      TActionFromMiddleware extends Action = Extract<
+        TActionTypeOrMiddleware extends (
+          ...store: any
+        ) => (...next: any) => (action: infer TMiddlewareActionType) => void
+          ? TMiddlewareActionType
+          : TReduxModuleTypeContainer['_actionType'],
+        Action
+      >
+    >(
+      typeOrHandler: TActionTypeOrMiddleware,
+      handler?: TMiddleware
+    ) => ReduxModuleMayRequireInitialization<
+      ReduxModuleTypeContainerWithAction<
+        TReduxModuleTypeContainer,
+        TActionFromMiddleware
+      >
+    >
+  : // TMiddleware should conform to TAction
+    <
+      TActionTypeOrMiddleware extends
+        | ReduxModuleMiddleware<TReduxModuleTypeContainer>
+        | string,
+      TReduxModuleMiddleware extends ReduxModuleMiddleware<
+        ReduxModuleTypeContainerWithActionMatchingSubstring<
           TReduxModuleTypeContainer,
-          TActionFromMiddleware
+          TActionTypeOrMiddleware extends string
+            ? TActionTypeOrMiddleware
+            : never
         >
       >
-    : // TMiddleware should conform to TAction
-      <
-        TActionTypeOrMiddleware extends
-          | ReduxModuleMiddleware<TReduxModuleTypeContainer>
-          | string,
-        TReduxModuleMiddleware extends ReduxModuleMiddleware<
-          ReduxModuleTypeContainerWithActionMatchingSubstring<
-            TReduxModuleTypeContainer,
-            TActionTypeOrMiddleware extends string
-              ? TActionTypeOrMiddleware
-              : never
-          >
-        >
-      >(
-        type: TActionTypeOrMiddleware,
-        handler?: TReduxModuleMiddleware
-      ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
->;
+    >(
+      type: TActionTypeOrMiddleware,
+      handler?: TReduxModuleMiddleware
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
 
 export type Interceptor<
   TAction extends Action,
@@ -603,146 +599,153 @@ export type Interceptor<
 
 type InterceptFunctionType<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerPathIsAny = IsStrictlyAny<
+    TReduxModuleTypeContainer['_pathType']
+  >,
+  TReduxModuleTypeContainerActionIsUndefined = ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>,
   TInterceptor extends Interceptor<Action, any, any, any> = Interceptor<
     Action,
     ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
     ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
     TReduxModuleTypeContainer['_initializerPropsType']
   >
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  (
-    interceptor: Interceptor<
-      TReduxModuleTypeContainer['_actionType'],
-      ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
-      ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
-      TReduxModuleTypeContainer['_initializerPropsType']
-    >
-  ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>,
-  true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
-    ? (interceptor: TInterceptor) => TInterceptor extends Interceptor<
-        infer TInterceptorAction,
-        any,
-        any,
-        any
+> = true extends TReduxModuleTypeContainerPathIsAny
+  ? (
+      interceptor: Interceptor<
+        TReduxModuleTypeContainer['_actionType'],
+        ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
+        ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
+        TReduxModuleTypeContainer['_initializerPropsType']
       >
-        ? // infer TAction from TInterceptor
-          ReduxModuleMayRequireInitialization<
-            ReduxModuleTypeContainerWithAction<
-              TReduxModuleTypeContainer,
-              TInterceptorAction
-            >
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
+  : true extends TReduxModuleTypeContainerActionIsUndefined
+  ? // infer action from interceptor
+    (interceptor: TInterceptor) => TInterceptor extends Interceptor<
+      infer TInterceptorAction,
+      any,
+      any,
+      any
+    >
+      ? // infer TAction from TInterceptor
+        ReduxModuleMayRequireInitialization<
+          ReduxModuleTypeContainerWithAction<
+            TReduxModuleTypeContainer,
+            TInterceptorAction
           >
-        : // not a Interceptor
-          never
-    : // confirm TInterceptor to
-      (
-        interceptor: Interceptor<
-          TReduxModuleTypeContainer['_actionType'],
-          ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
-          ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
-          TReduxModuleTypeContainer['_initializerPropsType']
         >
-      ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>
->;
+      : // not an Interceptor
+        never
+  : // conform TInterceptor to action and state
+    (
+      interceptor: Interceptor<
+        TReduxModuleTypeContainer['_actionType'],
+        ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
+        ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>,
+        TReduxModuleTypeContainer['_initializerPropsType']
+      >
+    ) => ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
 
 type WithFunctionType<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  any,
-  <OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
-    module: OtherModule
-  ) => OtherModule extends ReduxModule<infer TWReduxModule>
-    ? TWReduxModule extends ReduxModuleTypeContainerAny
-      ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
-        ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
-          ? ReduxModuleMayRequireInitialization<
-              ReduxModuleTypeContainerCombinedWith<
-                TReduxModuleTypeContainer,
-                TWReduxModule
-              >
-            >
-          : ReduxModuleMayRequireInitialization<
-              ReduxModuleTypeContainerCombinedWith<
-                TReduxModuleTypeContainer,
-                ReduxModuleTypeContainerWithAction<
-                  TWReduxModule,
-                  TReduxModuleTypeContainer['_actionType']
-                >
-              >
-            >
-        : ReduxModuleMayRequireInitialization<
+> = <OtherModule extends ReduxModuleBase<ReduxModuleTypeContainerAny>>(
+  module: OtherModule
+) => OtherModule extends ReduxModuleBase<infer TWReduxModule>
+  ? TWReduxModule extends ReduxModuleTypeContainerAny
+    ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
+      ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+        ? ReduxModuleMayRequireInitialization<
             ReduxModuleTypeContainerCombinedWith<
               TReduxModuleTypeContainer,
               TWReduxModule
             >
           >
-      : never
+        : ReduxModuleMayRequireInitialization<
+            ReduxModuleTypeContainerCombinedWith<
+              TReduxModuleTypeContainer,
+              ReduxModuleTypeContainerWithAction<
+                TWReduxModule,
+                TReduxModuleTypeContainer['_actionType']
+              >
+            >
+          >
+      : ReduxModuleMayRequireInitialization<
+          ReduxModuleTypeContainerCombinedWith<
+            TReduxModuleTypeContainer,
+            TWReduxModule
+          >
+        >
     : never
->;
+  : never;
 
 type ImportFunctionType<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  any,
-  <OtherModule extends ReduxModule<ReduxModuleTypeContainerAny>>(
-    module: OtherModule
-  ) => OtherModule extends ReduxModule<infer TWReduxModule>
-    ? TWReduxModule extends ReduxModuleTypeContainerAny
-      ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
-        ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
-          ? ReduxModuleMayRequireInitialization<
-              ReduxModuleTypeContainerWithImport<
-                TReduxModuleTypeContainer,
-                TWReduxModule
-              >
-            >
-          : ReduxModuleMayRequireInitialization<
-              ReduxModuleTypeContainerWithImport<
-                TReduxModuleTypeContainer,
-                ReduxModuleTypeContainerWithAction<
-                  TWReduxModule,
-                  TReduxModuleTypeContainer['_actionType']
-                >
-              >
-            >
-        : ReduxModuleMayRequireInitialization<
+> = <OtherModule extends ReduxModuleBase<ReduxModuleTypeContainerAny>>(
+  module: OtherModule
+) => OtherModule extends ReduxModuleBase<infer TWReduxModule>
+  ? TWReduxModule extends ReduxModuleTypeContainerAny
+    ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
+      ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+        ? ReduxModuleMayRequireInitialization<
             ReduxModuleTypeContainerWithImport<
               TReduxModuleTypeContainer,
               TWReduxModule
             >
           >
-      : never
+        : ReduxModuleMayRequireInitialization<
+            ReduxModuleTypeContainerWithImport<
+              TReduxModuleTypeContainer,
+              ReduxModuleTypeContainerWithAction<
+                TWReduxModule,
+                TReduxModuleTypeContainer['_actionType']
+              >
+            >
+          >
+      : ReduxModuleMayRequireInitialization<
+          ReduxModuleTypeContainerWithImport<
+            TReduxModuleTypeContainer,
+            TWReduxModule
+          >
+        >
     : never
->;
+  : never;
 
-export interface ReduxModule<
+export interface ReduxModuleBase<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
-  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>
+  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>,
+  TReduxModuleTypeContainerModules = UnionToIntersection<
+    TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerComposite<
+      any,
+      infer TReduxModuleTypeContainerMembers
+    >
+      ? ReduxModuleFromReduxModuleTypeContainerHavingPath<TReduxModuleTypeContainerMembers>
+      : {}
+  >
 > {
   readonly _types: TReduxModuleTypeContainerWithImportPathsExcluded;
   readonly path: TReduxModuleTypeContainer['_pathTupleType'];
   readonly name: TReduxModuleTypeContainer['_nameType'];
   readonly actions: TReduxModuleTypeContainerWithImportPathsExcluded['_actionCreatorType'];
-  readonly modules: TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerComposite<
-    any,
-    infer TReduxModuleTypeContainerMembers
-  >
-    ? UnionToIntersection<
-        ReduxModuleFromReduxModuleTypeContainerHavingPath<TReduxModuleTypeContainerMembers>
-      >
-    : {};
+  readonly modules: TReduxModuleTypeContainerModules;
+}
+
+export interface ReduxModule<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TPreloadedStateFunctionType = PreloadedStateFunctionType<TReduxModuleTypeContainer>,
+  TReduceFunctionType = ReduceFunctionType<TReduxModuleTypeContainer>,
+  TOnFunctionType = OnFunctionType<TReduxModuleTypeContainer>,
+  TInterceptorFunctionType = InterceptFunctionType<TReduxModuleTypeContainer>,
+  TWithFunctionType = WithFunctionType<TReduxModuleTypeContainer>,
+  TImportFunctionType = ImportFunctionType<TReduxModuleTypeContainer>
+> extends ReduxModuleBase<TReduxModuleTypeContainer> {
   configure(
     configure: PostConfigure<TReduxModuleTypeContainer>
   ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;
-  preloadedState: PreloadedStateFunctionType<TReduxModuleTypeContainer>;
-  reduce: ReduceFunctionType<TReduxModuleTypeContainer>;
-  on: OnFunctionType<TReduxModuleTypeContainer>;
-  intercept: InterceptFunctionType<TReduxModuleTypeContainer>;
-  with: WithFunctionType<TReduxModuleTypeContainer>;
-  import: ImportFunctionType<TReduxModuleTypeContainer>;
+  preloadedState: TPreloadedStateFunctionType;
+  reduce: TReduceFunctionType;
+  on: TOnFunctionType;
+  intercept: TInterceptorFunctionType;
+  with: TWithFunctionType;
+  import: TImportFunctionType;
 }
 
 type ReduxModuleFromReduxModuleTypeContainerHavingPath<
@@ -822,18 +825,14 @@ export type ReduxModuleMayRequireInitialization<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TReduxModuleFullyInitialized = ReduxModuleFullyInitialized<TReduxModuleTypeContainer>,
   TReduxModuleRequiresInitialization = ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>
-> = IsAny<
-  TReduxModuleTypeContainer['_pathType'],
-  ReduxModule<TReduxModuleTypeContainer>,
-  TReduxModuleTypeContainer['_initializerPropsType'] extends undefined
+> = TReduxModuleTypeContainer['_initializerPropsType'] extends undefined
+  ? TReduxModuleFullyInitialized
+  : {} extends TReduxModuleTypeContainer['_initializerPropsType']
+  ? {} extends Required<TReduxModuleTypeContainer['_initializerPropsType']>
     ? TReduxModuleFullyInitialized
-    : {} extends TReduxModuleTypeContainer['_initializerPropsType']
-    ? {} extends Required<TReduxModuleTypeContainer['_initializerPropsType']>
-      ? TReduxModuleFullyInitialized
-      : // only has optional props, allow it to set props or create store
-        ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModuleTypeContainer>
-    : TReduxModuleRequiresInitialization
->;
+    : // only has optional props, allow it to set props or create store
+      ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModuleTypeContainer>
+  : TReduxModuleRequiresInitialization;
 
 export type ReduxModuleRequiresInitializationOrFullyInitialized<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny

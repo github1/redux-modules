@@ -29,6 +29,7 @@ import {
   ReduxModuleTypeContainerWithProps,
   ReduxModuleTypeContainerAny,
   ReduxModuleTypeContainerWithImportPathsExcluded,
+  ReduxModuleBase,
 } from '../redux-module';
 import { isAction } from '../is-action';
 import {
@@ -75,7 +76,8 @@ class ReduxModuleImplementation<
   TAction extends Action | never = TReduxModuleTypeContainer['_actionType'],
   TActionCreators = TReduxModuleTypeContainer['_actionCreatorType'],
   TProps = TReduxModuleTypeContainer['_initializerPropsType'],
-  TStoreState = ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
+  TStoreState = ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>,
+  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer> = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>
 > implements
     ReduxModule<TReduxModuleTypeContainer>,
     ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>,
@@ -84,8 +86,8 @@ class ReduxModuleImplementation<
   public readonly name: TName;
   public readonly path: string[];
   public readonly actions: Readonly<any>;
-  public readonly _types: ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>;
-  private combinedModules: Readonly<ReduxModule<any>[]>;
+  public readonly _types: TReduxModuleTypeContainerWithImportPathsExcluded;
+  private combinedModules: Readonly<ReduxModuleBase<any>[]>;
   constructor(
     private readonly rawPath: string,
     actions: any,
@@ -98,7 +100,7 @@ class ReduxModuleImplementation<
       TReduxModuleTypeContainer,
       TReduxModuleTypeContainer['_initializerPropsType']
     >,
-    combinedModules: ReduxModule<any>[]
+    combinedModules: ReduxModuleBase<any>[]
   ) {
     this.path = nameToPath(rawPath);
     this.name = [...this.path].pop() as TName;
@@ -121,7 +123,9 @@ class ReduxModuleImplementation<
     });
     return mods;
   }
-  public configure(configure: PostConfigure<TReduxModuleTypeContainer>) {
+  public configure(
+    configure: PostConfigure<TReduxModuleTypeContainer>
+  ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer> {
     return new ReduxModuleImplementation(
       this.rawPath,
       this.actions,
@@ -132,7 +136,7 @@ class ReduxModuleImplementation<
       this.propsInitializer,
       this.providedProps,
       this.combinedModules.slice()
-    ) as any;
+    );
   }
   public reduce(reducer: ReduxModuleReducer<TReduxModuleTypeContainer>) {
     return new ReduxModuleImplementation(
@@ -237,7 +241,7 @@ class ReduxModuleImplementation<
     });
   }
 
-  public with(module: ReduxModule<any>) {
+  public with(module: ReduxModuleBase<any>) {
     this.combinedModules = this.combinedModules.filter(
       (m) => nameToPath(m.name).join() !== nameToPath(module.name).join()
     );
@@ -261,7 +265,7 @@ class ReduxModuleImplementation<
     ) as any;
   }
 
-  public import(module: ReduxModule<any>) {
+  public import(module: ReduxModuleBase<any>) {
     return this as any;
   }
 

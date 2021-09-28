@@ -8,7 +8,10 @@ import {
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
 import { Action, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ReduxModuleTypeContainerCombinedWith } from './redux-module';
+import {
+  ReduxModuleBase,
+  ReduxModuleTypeContainerCombinedWith,
+} from './redux-module';
 
 /**
  * Action types which can be dispatched
@@ -393,63 +396,63 @@ describe('redux-modules', () => {
         next(action);
       });
   });
-  // it('can combine reducers with nested store paths', () => {
-  //   const mod = createModule('foo->bar->baz')
-  //     .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
-  //       return { ...state, actionTypes: [...state.actionTypes, action.type] };
-  //     })
-  //     .on((store) => (next) => (action) => {
-  //       expectType<
-  //         TypeEqual<
-  //           ReturnType<typeof store.getState>,
-  //           Readonly<{ foo: { bar: { baz: StateType } } }>
-  //         >
-  //       >(true);
-  //       expectType<TypeEqual<typeof action, ActionTypes>>(true);
-  //       next(action);
-  //     })
-  //     .with(
-  //       createModule('foo->bar').reduce(
-  //         (state: { fooBar: string } = { fooBar: '' }) => {
-  //           return { ...state, fooBar: 'abc' };
-  //         }
-  //       )
-  //     );
-  //   expectType<
-  //     TypeEqual<typeof mod.modules.foo.bar['_types']['_nameType'], 'bar'>
-  //   >(true);
-  //   expectType<
-  //     TypeEqual<
-  //       typeof mod.modules.foo.bar['_types']['_stateType'],
-  //       { fooBar: string }
-  //     >
-  //   >(true);
-  //   const store = mod.asStore();
-  //   expectType<
-  //     TypeEqual<
-  //       ReturnType<typeof store.getState>,
-  //       Readonly<
-  //         {
-  //           foo: {
-  //             bar: {
-  //               baz: StateType;
-  //             };
-  //           };
-  //         } & {
-  //           foo: {
-  //             bar: {
-  //               fooBar: string;
-  //             };
-  //           };
-  //         }
-  //       >
-  //     >
-  //   >(true);
-  //   store.dispatch({ type: 'SOME_ACTION' });
-  //   expect(store.getState().foo.bar.fooBar).toBe('abc');
-  //   expect(store.getState().foo.bar.baz.actionTypes.length).toBe(1);
-  //   expect(store.getState().foo.bar.baz.actionTypes[0]).toBe('SOME_ACTION');
-  // });
+  it('can combine reducers with nested store paths', () => {
+    const mod = createModule('foo->bar->baz')
+      .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
+        return { ...state, actionTypes: [...state.actionTypes, action.type] };
+      })
+      .on((store) => (next) => (action) => {
+        expectType<
+          TypeEqual<
+            ReturnType<typeof store.getState>,
+            Readonly<{ foo: { bar: { baz: StateType } } }>
+          >
+        >(true);
+        expectType<TypeEqual<typeof action, ActionTypes>>(true);
+        next(action);
+      })
+      .with(
+        createModule('foo->bar').reduce(
+          (state: { fooBar: string } = { fooBar: '' }) => {
+            return { ...state, fooBar: 'abc' };
+          }
+        )
+      );
+    expectType<
+      TypeEqual<typeof mod.modules.foo.bar['_types']['_nameType'], 'bar'>
+    >(true);
+    expectType<
+      TypeEqual<
+        typeof mod.modules.foo.bar['_types']['_stateType'],
+        { fooBar: string }
+      >
+    >(true);
+    const store = mod.asStore();
+    expectType<
+      TypeEqual<
+        ReturnType<typeof store.getState>,
+        Readonly<
+          {
+            foo: {
+              bar: {
+                baz: StateType;
+              };
+            };
+          } & {
+            foo: {
+              bar: {
+                fooBar: string;
+              };
+            };
+          }
+        >
+      >
+    >(true);
+    store.dispatch({ type: 'SOME_ACTION' });
+    expect(store.getState().foo.bar.fooBar).toBe('abc');
+    expect(store.getState().foo.bar.baz.actionTypes.length).toBe(1);
+    expect(store.getState().foo.bar.baz.actionTypes[0]).toBe('SOME_ACTION');
+  });
   it('can be combined with other modules', () => {
     const mod1 = createModule('test').reduce(
       (state: StateType = { actionTypes: [] }, action: ActionTypes) => {
@@ -873,26 +876,26 @@ describe('redux-modules', () => {
       "Cannot assign to read only property 'doSomething' of object"
     );
   });
-  it('a module is assignable to ReduxModule<ReduxModuleTypeContainerAny>', () => {
-    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(createModule());
-    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
+  it('a module is assignable to ReduxModuleBase<ReduxModuleTypeContainerAny>', () => {
+    expectType<ReduxModuleBase<ReduxModuleTypeContainerAny>>(createModule());
+    expectType<ReduxModuleBase<ReduxModuleTypeContainerAny>>(
       createModule('foo->bar')
     );
-    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
+    expectType<ReduxModuleBase<ReduxModuleTypeContainerAny>>(
       createModule('foo->bar').reduce(
         (state: StateType, action: ActionTypes) => {
           return { ...state, actionTypes: [action.type] };
         }
       )
     );
-    expectType<ReduxModule<ReduxModuleTypeContainerAny>>(
+    expectType<ReduxModuleBase<ReduxModuleTypeContainerAny>>(
       createModule('foo->bar', {
         initializer(props: { something: string }) {
           return props;
         },
       })
     );
-    function testFunc<T extends ReduxModule<ReduxModuleTypeContainerAny>>(
+    function testFunc<T extends ReduxModuleBase<ReduxModuleTypeContainerAny>>(
       mod: T
     ) {
       expectType<TypeOf<T, typeof mod>>(true);
@@ -1057,148 +1060,76 @@ describe('redux-modules', () => {
   });
   describe('Type instantiation is excessively deep and possibly infinite', () => {
     it('handles this error', () => {
-      // const mod = createModule('ROOT', {
-      //   actionCreators: {
-      //     doROOT_A(): { type: 'ROOT_A' } {
-      //       return null;
-      //     },
-      //     doROOT_B(): { type: 'ROOT_B' } {
-      //       return null;
-      //     },
-      //     doROOT_C(): { type: 'ROOT_C' } {
-      //       return null;
-      //     },
-      //     doROOT_D(): { type: 'ROOT_D' } {
-      //       return null;
-      //     },
-      //   },
-      // })
-      //   .with(
-      //     createModule('ROOTD', {
-      //       actionCreators: {
-      //         doROOTD_A(): { type: 'ROOTD_A' } {
-      //           return null;
-      //         },
-      //         doROOTD_B(): { type: 'ROOTD_B' } {
-      //           return null;
-      //         },
-      //         doROOTD_C(): { type: 'ROOTD_C' } {
-      //           return null;
-      //         },
-      //         doROOTD_D(): { type: 'ROOTD_D' } {
-      //           return null;
-      //         },
-      //       },
-      //     })
-      //       .with(
-      //         createModule('ROOTDC', {
-      //           actionCreators: {
-      //             doROOTDC_A(): { type: 'ROOTDC_A' } {
-      //               return null;
-      //             },
-      //             doROOTDC_B(): { type: 'ROOTDC_B' } {
-      //               return null;
-      //             },
-      //             doROOTDC_C(): { type: 'ROOTDC_C' } {
-      //               return null;
-      //             },
-      //             doROOTDC_D(): { type: 'ROOTDC_D' } {
-      //               return null;
-      //             },
-      //           },
-      //         }).with(
-      //           createModule('ROOTDCB', {
-      //             actionCreators: {
-      //               doROOTDCB_A(): { type: 'ROOTDCB_A' } {
-      //                 return null;
-      //               },
-      //               doROOTDCB_B(): { type: 'ROOTDCB_B' } {
-      //                 return null;
-      //               },
-      //               doROOTDCB_C(): { type: 'ROOTDCB_C' } {
-      //                 return null;
-      //               },
-      //               doROOTDCB_D(): { type: 'ROOTDCB_D' } {
-      //                 return null;
-      //               },
-      //             },
-      //           })
-      //         )
-      //       )
-      //       .with(
-      //         createModule('ROOTDB', {
-      //           actionCreators: {
-      //             doROOTDB_A(): { type: 'ROOTDB_A' } {
-      //               return null;
-      //             },
-      //             doROOTDB_B(): { type: 'ROOTDB_B' } {
-      //               return null;
-      //             },
-      //             doROOTDB_C(): { type: 'ROOTDB_C' } {
-      //               return null;
-      //             },
-      //             doROOTDB_D(): { type: 'ROOTDB_D' } {
-      //               return null;
-      //             },
-      //           },
-      //         })
-      //       )
-      //   )
-      //   .with(
-      //     createModule('ROOTC', {
-      //       actionCreators: {
-      //         doROOTC_A(): { type: 'ROOTC_A' } {
-      //           return null;
-      //         },
-      //         doROOTC_B(): { type: 'ROOTC_B' } {
-      //           return null;
-      //         },
-      //         doROOTC_C(): { type: 'ROOTC_C' } {
-      //           return null;
-      //         },
-      //         doROOTC_D(): { type: 'ROOTC_D' } {
-      //           return null;
-      //         },
-      //       },
-      //     }).with(
-      //       createModule('ROOTCB', {
-      //         actionCreators: {
-      //           doROOTCB_A(): { type: 'ROOTCB_A' } {
-      //             return null;
-      //           },
-      //           doROOTCB_B(): { type: 'ROOTCB_B' } {
-      //             return null;
-      //           },
-      //           doROOTCB_C(): { type: 'ROOTCB_C' } {
-      //             return null;
-      //           },
-      //           doROOTCB_D(): { type: 'ROOTCB_D' } {
-      //             return null;
-      //           },
-      //         },
-      //       })
-      //     )
-      //   )
-      //   .with(
-      //     createModule('ROOTB', {
-      //       actionCreators: {
-      //         doROOTB_A(): { type: 'ROOTB_A' } {
-      //           return null;
-      //         },
-      //         doROOTB_B(): { type: 'ROOTB_B' } {
-      //           return null;
-      //         },
-      //         doROOTB_C(): { type: 'ROOTB_C' } {
-      //           return null;
-      //         },
-      //         doROOTB_D(): { type: 'ROOTB_D' } {
-      //           return null;
-      //         },
-      //       },
-      //     })
-      //   );
-      // // end
-      // console.log(mod);
+      const mod = createModule('ROOT', {
+        actionCreators: {
+          doROOT_A(): { type: 'ROOT_A' } {
+            return null;
+          },
+        },
+      })
+        .with(
+          createModule('ROOTD', {
+            actionCreators: {
+              doROOTD_A(): { type: 'ROOTD_A' } {
+                return null;
+              },
+            },
+          })
+            .with(
+              createModule('ROOTDC', {
+                actionCreators: {
+                  doROOTDC_A(): { type: 'ROOTDC_A' } {
+                    return null;
+                  },
+                },
+              }).with(
+                createModule('ROOTDCB', {
+                  actionCreators: {
+                    doROOTDCB_A(): { type: 'ROOTDCB_A' } {
+                      return null;
+                    },
+                  },
+                })
+              )
+            )
+            .with(
+              createModule('ROOTDB', {
+                actionCreators: {
+                  doROOTDB_A(): { type: 'ROOTDB_A' } {
+                    return null;
+                  },
+                },
+              })
+            )
+        )
+        .with(
+          createModule('ROOTC', {
+            actionCreators: {
+              doROOTC_A(): { type: 'ROOTC_A' } {
+                return null;
+              },
+            },
+          }).with(
+            createModule('ROOTCB', {
+              actionCreators: {
+                doROOTCB_A(): { type: 'ROOTCB_A' } {
+                  return null;
+                },
+              },
+            })
+          )
+        )
+        .with(
+          createModule('ROOTB', {
+            actionCreators: {
+              doROOTB_A(): { type: 'ROOTB_A' } {
+                return null;
+              },
+            },
+          })
+        );
+      // end
+      console.log(mod);
     });
   });
 });
