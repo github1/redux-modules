@@ -287,7 +287,11 @@ describe('redux-modules', () => {
     expectType<'asStore' extends keyof typeof initialized ? true : false>(true);
   });
   it('can import module action types and store state', () => {
-    const modToImport = createModule('to_import').reduce(
+    const modToImport = createModule('to_import', {
+      initializer(props: { something: number }) {
+        return props;
+      },
+    }).reduce(
       (
         state: { someVal?: string } = {},
         action: { type: 'IMPORTED_ACTION' }

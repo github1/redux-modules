@@ -805,9 +805,9 @@ export interface ReduxModuleRequiresInitialization<
  * Interface for a redux module which is fully initialized.
  */
 export interface ReduxModuleFullyInitialized<
-  TReduxModuleTypeContainer_z extends ReduxModuleTypeContainerAny,
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer_z>
-> extends ReduxModule<TReduxModuleTypeContainer_z> {
+  TReduxModuleTypeContainerAll extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainerAll>
+> extends ReduxModule<TReduxModuleTypeContainerAll> {
   asStore<
     TReduxModuleStoreOptions extends ReduxModuleStoreOptions<
       ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
@@ -822,16 +822,17 @@ export interface ReduxModuleFullyInitialized<
  * or ReduxModuleFullyInitialized whether initialization props have been supplied.
  */
 export type ReduxModuleMayRequireInitialization<
-  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
-  TReduxModuleFullyInitialized = ReduxModuleFullyInitialized<TReduxModuleTypeContainer>,
-  TReduxModuleRequiresInitialization = ReduxModuleRequiresInitialization<TReduxModuleTypeContainer>
+  TReduxModuleTypeContainerAll extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainerAll>,
+  TReduxModuleFullyInitialized = ReduxModuleFullyInitialized<TReduxModuleTypeContainerAll>,
+  TReduxModuleRequiresInitialization = ReduxModuleRequiresInitialization<TReduxModuleTypeContainerAll>
 > = TReduxModuleTypeContainer['_initializerPropsType'] extends undefined
   ? TReduxModuleFullyInitialized
   : {} extends TReduxModuleTypeContainer['_initializerPropsType']
   ? {} extends Required<TReduxModuleTypeContainer['_initializerPropsType']>
     ? TReduxModuleFullyInitialized
     : // only has optional props, allow it to set props or create store
-      ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModuleTypeContainer>
+      ReduxModuleRequiresInitializationOrFullyInitialized<TReduxModuleTypeContainerAll>
   : TReduxModuleRequiresInitialization;
 
 export type ReduxModuleRequiresInitializationOrFullyInitialized<
