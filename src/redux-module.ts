@@ -28,7 +28,7 @@ export type ReduxModuleTypeContainer<
   TState,
   TAction extends Action,
   TActionCreators extends Record<string, (...args: any) => TAction> = undefined,
-  TProps = never,
+  TProps = {},
   TPathTuple extends string[] = IsAny<
     TPath,
     any,
@@ -101,6 +101,7 @@ type ReduxModuleTypeContainerStateIsUndefined<
   IsStrictlyAny<TReduxModuleTypeContainer['_stateType']>
 >;
 
+// TReduxModuleTypeContainerMembersAll['_initializerPropsType']
 export type ReduxModuleTypeContainerComposite<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
   TReduxModuleTypeContainerMembers extends ReduxModuleTypeContainerAny = never,

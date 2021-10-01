@@ -373,6 +373,18 @@ describe('redux-modules', () => {
       >
     >(true);
   });
+  it('allows initialization when an uninitialized module is combined with a module with imports', () => {
+    const uninitialized = createModule('test', {
+      initializer(props: { propA: 'string' }) {
+        return props;
+      },
+    });
+    const withImports = createModule('test2').import(createModule('test3'));
+    const combined = uninitialized.with(withImports);
+
+    expectType<'initialize' extends keyof typeof combined ? true : false>(true);
+    expectType<'asStore' extends keyof typeof combined ? true : false>(false);
+  });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
       .reduce((state: StateType = { actionTypes: [] }, action: ActionTypes) => {
