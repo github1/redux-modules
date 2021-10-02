@@ -380,7 +380,7 @@ describe('redux-modules', () => {
       initializer(props: { propA: string }) {
         return props;
       },
-    });
+    }).reduce((state: { stateA: string }) => state);
 
     const importOne = createModule('test3', {
       initializer(props: { propB: string }) {
@@ -398,6 +398,7 @@ describe('redux-modules', () => {
       .import(importTwo);
 
     const combined = createModule('root')
+      .reduce((state: { stateB: string }) => state)
       .with(uninitialized)
       .with(importOne)
       .with(importTwo)
@@ -431,6 +432,9 @@ describe('redux-modules', () => {
         .asStore()
         .actions.test5.doSomething().type
     ).toBe('TEST5');
+
+    type TCombinedPath = typeof combined['_types']['_pathType'];
+    expectType<TypeEqual<TCombinedPath, 'root'>>(true);
   });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
@@ -1043,6 +1047,8 @@ describe('redux-modules', () => {
         typeof mod1['_types'],
         typeof mod2['_types']
       >;
+      // primary name should be target type
+      expectType<TypeEqual<Mod1WithMod2['_nameType'], 'test'>>(true);
       expectType<
         TypeEqual<Mod1WithMod2['_modules']['_nameType'], 'test' | 'test2'>
       >(true);
@@ -1053,6 +1059,8 @@ describe('redux-modules', () => {
         Mod1WithMod2,
         typeof mod3['_types']
       >;
+      // primary name should be target type
+      expectType<TypeEqual<Mod1WithMod2WithMod3['_nameType'], 'test'>>(true);
       expectType<
         TypeEqual<
           Mod1WithMod2WithMod3['_modules']['_nameType'],

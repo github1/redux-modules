@@ -440,12 +440,8 @@ export type ReduxModuleTypeContainerCombinedWith<
     >
     ? // Source is a composite module
       ReduxModuleTypeContainerComposite<
-        | ReduxModuleTypeContainerAddOrReplacePath<
-            TTargetReduxModule,
-            TSourceReduxModule
-          >
-        | TSourceReduxModule,
-        TTargetReduxModules | TSourceReduxModules,
+        TTargetReduxModule,
+        TTargetReduxModules | TSourceReduxModule | TSourceReduxModules,
         true extends IsStrictlyAny<TTargetImportPaths>
           ? never
           : TTargetImportPaths | true extends IsStrictlyAny<TSourceImportPaths>
