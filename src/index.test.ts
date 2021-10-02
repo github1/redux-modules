@@ -10,7 +10,9 @@ import { Action, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
   ReduxModuleBase,
+  ReduxModuleTypeContainerAddOrReplacePath,
   ReduxModuleTypeContainerCombinedWith,
+  ReduxModuleTypeContainerNameOnly,
 } from './redux-module';
 
 /**
@@ -375,15 +377,60 @@ describe('redux-modules', () => {
   });
   it('allows initialization when an uninitialized module is combined with a module with imports', () => {
     const uninitialized = createModule('test', {
-      initializer(props: { propA: 'string' }) {
+      initializer(props: { propA: string }) {
         return props;
       },
     });
-    const withImports = createModule('test2').import(createModule('test3'));
-    const combined = uninitialized.with(withImports);
 
+    const importOne = createModule('test3', {
+      initializer(props: { propB: string }) {
+        return props;
+      },
+    });
+    const importTwo = createModule('test4', {
+      initializer(props: { propC: string }) {
+        return props;
+      },
+    });
+
+    const withImports = createModule('test2')
+      .import(importOne)
+      .import(importTwo);
+
+    const combined = createModule('root')
+      .with(uninitialized)
+      .with(importOne)
+      .with(importTwo)
+      .with(
+        createModule('test5', {
+          actionCreators: {
+            doSomething(): { type: 'TEST5' } {
+              return { type: 'TEST5' };
+            },
+          },
+        })
+      )
+      .with(withImports);
+
+    type TProps = typeof combined['_types']['_initializerPropsType'];
+    // has expected required props type
+    expectType<TProps>({
+      propA: 'a',
+      propB: 'b',
+      propC: 'c',
+    });
+
+    // requires initialization
     expectType<'initialize' extends keyof typeof combined ? true : false>(true);
     expectType<'asStore' extends keyof typeof combined ? true : false>(false);
+
+    // can access action creators on combined module
+    expect(
+      combined
+        .initialize({ propA: 'a', propB: 'b', propC: 'c' })
+        .asStore()
+        .actions.test5.doSomething().type
+    ).toBe('TEST5');
   });
   it('can run a configuration function when made into a store', () => {
     const store = createModule('foo')
@@ -1021,9 +1068,11 @@ describe('redux-modules', () => {
       >;
       type Mod1WithMod2_with_Mod4WithMod5 =
         ReduxModuleTypeContainerCombinedWith<Mod1WithMod2, Mod4WithMod5>;
+      type Mod1WithMod2_with_Mod4WithMod5_Names =
+        Mod1WithMod2_with_Mod4WithMod5['_modules']['_nameType'];
       expectType<
         TypeEqual<
-          Mod1WithMod2_with_Mod4WithMod5['_modules']['_nameType'],
+          Mod1WithMod2_with_Mod4WithMod5_Names,
           'test' | 'test2' | 'test4' | 'test5'
         >
       >(true);
@@ -1072,6 +1121,58 @@ describe('redux-modules', () => {
       >;
       expectType<TypeEqual<Mod1WithMod2['_nameType'], 'test'>>(true);
       expectType<TypeEqual<Mod1WithMod2['_actionType']['type'], 'A2'>>(true);
+    });
+    it('replaces modules in composite type with same path', () => {
+      const mod1 = createModule('test1')
+        .with(
+          createModule('test2', {
+            actionCreators: {
+              a1(): { type: 'A1' } {
+                return null;
+              },
+            },
+          })
+        )
+        .with(
+          createModule('test3', {
+            actionCreators: {
+              test3(): { type: 'TEST3' } {
+                return null;
+              },
+            },
+          })
+        );
+      expectType<
+        TypeEqual<
+          typeof mod1['_types']['_modules']['_pathType'],
+          'test1' | 'test2' | 'test3'
+        >
+      >(true);
+      type TActionBeforeReplace = typeof mod1['_types']['_actionType']['type'];
+      expectType<TypeEqual<TActionBeforeReplace, 'A1' | 'TEST3'>>(true);
+      const mod2replacement = createModule('test2', {
+        actionCreators: {
+          a2(): { type: 'A2' } {
+            return null;
+          },
+        },
+      });
+      type TReplaced = ReduxModuleTypeContainerAddOrReplacePath<
+        typeof mod1['_types'],
+        typeof mod2replacement['_types']
+      >;
+      type TPathsReplaced = TReplaced['_modules']['_pathType'];
+      expectType<TypeEqual<TPathsReplaced, 'test1' | 'test2' | 'test3'>>(true);
+      type TActionAfterReplace = TReplaced['_actionType']['type'];
+      expectType<TypeEqual<TActionAfterReplace, 'A2' | 'TEST3'>>(true);
+      type TAdd = ReduxModuleTypeContainerAddOrReplacePath<
+        typeof mod1['_types'],
+        ReduxModuleTypeContainerNameOnly<'test4'>
+      >;
+      type TPathsAdd = TAdd['_modules']['_pathType'];
+      expectType<TypeEqual<TPathsAdd, 'test1' | 'test2' | 'test3' | 'test4'>>(
+        true
+      );
     });
   });
   describe('Type instantiation is excessively deep and possibly infinite', () => {

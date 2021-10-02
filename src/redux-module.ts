@@ -397,7 +397,84 @@ export type ReduxModuleTypeContainerWithImport<
       TReduxModuleTypeContainerSource['_pathType']
     >;
 
+export type ReduxModuleTypeContainerAddOrReplacePath<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerReplacement extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerComposite<
+  infer TTargetReduxModule,
+  infer TTargetReduxModules,
+  infer TTargetImportPaths
+>
+  ? TReduxModuleTypeContainerReplacement['_pathType'] extends TTargetReduxModule['_pathType']
+    ? ReduxModuleTypeContainerComposite<
+        TReduxModuleTypeContainerReplacement,
+        TTargetReduxModules,
+        TTargetImportPaths
+      >
+    : ReduxModuleTypeContainerComposite<
+        TTargetReduxModule,
+        | ReduxModuleTypeContainerAddOrReplacePath<
+            TTargetReduxModules,
+            TReduxModuleTypeContainerReplacement
+          >
+        | TReduxModuleTypeContainerReplacement,
+        TTargetImportPaths
+      >
+  : TReduxModuleTypeContainerReplacement['_pathType'] extends TReduxModuleTypeContainer['_pathType']
+  ? never
+  : TReduxModuleTypeContainer;
+
 export type ReduxModuleTypeContainerCombinedWith<
+  TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerSource extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerComposite<
+  infer TTargetReduxModule,
+  infer TTargetReduxModules,
+  infer TTargetImportPaths
+>
+  ? // Target is a composite module
+    TReduxModuleTypeContainerSource extends ReduxModuleTypeContainerComposite<
+      infer TSourceReduxModule,
+      infer TSourceReduxModules,
+      infer TSourceImportPaths
+    >
+    ? // Source is a composite module
+      ReduxModuleTypeContainerComposite<
+        | ReduxModuleTypeContainerAddOrReplacePath<
+            TTargetReduxModule,
+            TSourceReduxModule
+          >
+        | TSourceReduxModule,
+        TTargetReduxModules | TSourceReduxModules,
+        true extends IsStrictlyAny<TTargetImportPaths>
+          ? never
+          : TTargetImportPaths | true extends IsStrictlyAny<TSourceImportPaths>
+          ? never
+          : TSourceImportPaths
+      >
+    : // Source is not a composite module
+    TTargetReduxModule['_pathType'] extends TReduxModuleTypeContainerSource['_pathType']
+    ? // Replacing the primary module
+      ReduxModuleTypeContainerComposite<
+        TReduxModuleTypeContainerSource,
+        TTargetReduxModules
+      >
+    : // Replace module in the union type by path, keeping the primary module
+      ReduxModuleTypeContainerAddOrReplacePath<
+        TReduxModuleTypeContainerTarget,
+        TReduxModuleTypeContainerSource
+      >
+  : // Target is not a composite module
+  TReduxModuleTypeContainerTarget['_pathType'] extends TReduxModuleTypeContainerSource['_pathType']
+  ? // Source and Target have the same path
+    TReduxModuleTypeContainerSource
+  : // Source and Target have different paths
+    ReduxModuleTypeContainerComposite<
+      TReduxModuleTypeContainerTarget,
+      TReduxModuleTypeContainerSource
+    >;
+
+export type ReduxModuleTypeContainerCombinedWithOld<
   TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerAny,
   TReduxModuleTypeContainerSource extends ReduxModuleTypeContainerAny
 > = TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerComposite<
