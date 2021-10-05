@@ -785,21 +785,12 @@ type ImportFunctionType<
 
 export interface ReduxModuleBase<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
-  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>,
-  TReduxModuleTypeContainerModules = UnionToIntersection<
-    TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerComposite<
-      any,
-      infer TReduxModuleTypeContainerMembers
-    >
-      ? ReduxModuleFromReduxModuleTypeContainerHavingPath<TReduxModuleTypeContainerMembers>
-      : {}
-  >
+  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>
 > {
   readonly _types: TReduxModuleTypeContainerWithImportPathsExcluded;
   readonly path: TReduxModuleTypeContainer['_pathTupleType'];
   readonly name: TReduxModuleTypeContainer['_nameType'];
   readonly actions: TReduxModuleTypeContainerWithImportPathsExcluded['_actionCreatorType'];
-  readonly modules: TReduxModuleTypeContainerModules;
 }
 
 export interface ReduxModule<
@@ -809,8 +800,18 @@ export interface ReduxModule<
   TOnFunctionType = OnFunctionType<TReduxModuleTypeContainer>,
   TInterceptorFunctionType = InterceptFunctionType<TReduxModuleTypeContainer>,
   TWithFunctionType = WithFunctionType<TReduxModuleTypeContainer>,
-  TImportFunctionType = ImportFunctionType<TReduxModuleTypeContainer>
+  TImportFunctionType = ImportFunctionType<TReduxModuleTypeContainer>,
+  TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerAny = ReduxModuleTypeContainerWithImportPathsExcluded<TReduxModuleTypeContainer>,
+  TReduxModuleTypeContainerModules = UnionToIntersection<
+    TReduxModuleTypeContainerWithImportPathsExcluded extends ReduxModuleTypeContainerComposite<
+      any,
+      infer TReduxModuleTypeContainerMembers
+    >
+      ? ReduxModuleFromReduxModuleTypeContainerHavingPath<TReduxModuleTypeContainerMembers>
+      : {}
+  >
 > extends ReduxModuleBase<TReduxModuleTypeContainer> {
+  readonly modules: TReduxModuleTypeContainerModules;
   configure(
     configure: PostConfigure<TReduxModuleTypeContainer>
   ): ReduxModuleMayRequireInitialization<TReduxModuleTypeContainer>;

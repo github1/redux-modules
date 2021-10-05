@@ -1,7 +1,6 @@
 import { Store } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
-  ReduxModule,
   ReduxModuleTypeContainerAny,
   ReduxModuleTypeContainerStoreState,
   ReduxModuleTypeContainerStoreActionCreator,
@@ -18,7 +17,6 @@ export type ReduxModuleStore<
     any,
     TReduxModuleTypeContainer['_actionType']
   >;
-  module: ReduxModule<TReduxModuleTypeContainer>;
   actions: Readonly<
     ReduxModuleTypeContainerStoreActionCreator<TReduxModuleTypeContainer>
   >;
