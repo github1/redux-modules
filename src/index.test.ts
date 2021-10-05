@@ -186,6 +186,17 @@ describe('redux-modules', () => {
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     expectType<'asStore' extends keyof typeof mod ? true : false>(false);
   });
+  it('combining an initialized module passes props to parent', () => {
+    const mod = createModule('test').with(
+      createModule('test1', {
+        initializer(props: { something: string }) {
+          return props;
+        },
+      }).initialize({ something: 'abc' })
+    );
+    const store = mod.asStore();
+    expect(store.props.something).toBe('abc');
+  });
   it('allows partial initialization', () => {
     const mod = createModule('test', {
       initializer(props: { propA: string; propB: string }) {

@@ -300,10 +300,42 @@ class ReduxModuleImplementation<
     ) as any;
   }
 
+  private collectModules(
+    combinedModule: any,
+    collected: ReduxModuleImplementation<any, any, any, any, any, any>[]
+  ): void {
+    if (combinedModule) {
+      collected.push(combinedModule);
+      for (const mod of combinedModule.combinedModules || []) {
+        this.collectModules(mod, collected);
+      }
+    }
+  }
+
+  private getInitializedProps() {
+    const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
+      [];
+    this.collectModules(this, modules);
+    const actionCreators = Object.freeze(
+      modules.reduce((creators, module) => {
+        return { ...creators, ...wrapInPath(module.actions, module.path) };
+      }, {})
+    );
+    const providedPropsContext = {
+      actions: Object.freeze({ ...actionCreators, ...this.actions }),
+    };
+    return this.propsInitializer(
+      (this.providedProps instanceof Function
+        ? this.providedProps(providedPropsContext)
+        : this.providedProps) || {}
+    );
+  }
+
   public asStore(options: ReduxModuleStoreOptions<any> = {}): any {
     const storeFactory = (): ReduxModuleStore<TReduxModuleTypeContainer> => {
       const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
-        [this, ...(this.combinedModules as any)];
+        [];
+      this.collectModules(this, modules);
 
       const actionCreators = Object.freeze(
         modules.reduce((creators, module) => {
@@ -314,12 +346,21 @@ class ReduxModuleImplementation<
       const providedPropsContext = {
         actions: Object.freeze({ ...actionCreators, ...this.actions }),
       };
+
+      const combinedModulesInitializedProps = modules.reduce(
+        (combined, module) => {
+          return { ...combined, ...module.getInitializedProps() };
+        },
+        {}
+      );
+
       const initializedProps = Object.freeze(
-        this.propsInitializer(
-          (this.providedProps instanceof Function
+        this.propsInitializer({
+          ...combinedModulesInitializedProps,
+          ...((this.providedProps instanceof Function
             ? this.providedProps(providedPropsContext)
-            : this.providedProps) || {}
-        )
+            : this.providedProps) || {}),
+        })
       );
 
       if (options.record) {
