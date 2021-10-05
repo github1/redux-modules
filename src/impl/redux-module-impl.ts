@@ -324,7 +324,7 @@ class ReduxModuleImplementation<
     const providedPropsContext = {
       actions: Object.freeze({ ...actionCreators, ...this.actions }),
     };
-    return this.propsInitializer(
+    return (
       (this.providedProps instanceof Function
         ? this.providedProps(providedPropsContext)
         : this.providedProps) || {}

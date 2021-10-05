@@ -190,12 +190,12 @@ describe('redux-modules', () => {
     const mod = createModule('test').with(
       createModule('test1', {
         initializer(props: { something: string }) {
-          return props;
+          return { something: props.something + '_processed' };
         },
       }).initialize({ something: 'abc' })
     );
     const store = mod.asStore();
-    expect(store.props.something).toBe('abc');
+    expect(store.props.something).toBe('abc_processed');
   });
   it('allows partial initialization', () => {
     const mod = createModule('test', {
