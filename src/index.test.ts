@@ -575,6 +575,9 @@ describe('redux-modules', () => {
     // expect(store.module.name).toBe('test');
     // expect(store.module.modules.mod2.name).toBe('mod2');
   });
+  it('it does not expose state of a module without a reducer', () => {
+    expect(true).toBeFalsy();
+  });
   it('does not yield an actionType of `any` with combined modules', () => {
     const mod = createModule('test')
       .with(
@@ -1268,5 +1271,26 @@ describe('redux-modules', () => {
       // end
       console.log(mod);
     });
+  });
+  it('an check composite types', () => {
+    type YesType<T extends string> = `${T}yes`;
+
+    type IsYesType<T, Y extends string> = T extends YesType<Y>
+      ? YesType<Y>
+      : never;
+
+    type ValueOfYesType<T> = T extends IsYesType<T, infer V> ? V : never;
+
+    type InferFromYesType<T, Y extends YesType<any>> = T extends YesType<any>
+      ? Y
+      : never;
+
+    type ValueOfYesType2<T> = T extends InferFromYesType<T, YesType<infer TY>>
+      ? TY
+      : never;
+
+    type AYesType = YesType<'as'>;
+
+    type Test = ValueOfYesType2<AYesType>;
   });
 });

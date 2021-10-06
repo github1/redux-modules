@@ -312,7 +312,7 @@ class ReduxModuleImplementation<
     }
   }
 
-  private getInitializedProps() {
+  public getInitializedProps() {
     const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
       [];
     this.collectModules(this, modules);
@@ -328,6 +328,17 @@ class ReduxModuleImplementation<
       (this.providedProps instanceof Function
         ? this.providedProps(providedPropsContext)
         : this.providedProps) || {}
+    );
+  }
+
+  public getCombinedActionCreators() {
+    const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
+      [];
+    this.collectModules(this, modules);
+    return Object.freeze(
+      modules.reduce((creators, module) => {
+        return { ...creators, ...wrapInPath(module.actions, module.path) };
+      }, {})
     );
   }
 

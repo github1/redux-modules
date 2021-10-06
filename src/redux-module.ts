@@ -48,10 +48,12 @@ export type ReduxModuleTypeContainerStoreState<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
 > = UnionToIntersection<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
-    ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
-      ? ReduxModuleTypeContainerStoreState<
-          TReduxModuleTypeContainer['_modules']
-        >
+    ? true extends IsReduxModuleTypeContainerComposite<TReduxModuleTypeContainer>
+      ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
+        ? ReduxModuleTypeContainerStoreState<
+            TReduxModuleTypeContainer['_modules']
+          >
+        : never
       : never
     : StoreStateAtPath<
         TReduxModuleTypeContainer['_stateType'],
@@ -63,13 +65,42 @@ export type ReduxModuleTypeContainerStoreActionCreator<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
 > = UnionToIntersection<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
-    ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
-      ? ReduxModuleTypeContainerStoreActionCreator<
-          TReduxModuleTypeContainer['_modules']
-        >
+    ? true extends IsReduxModuleTypeContainerComposite<TReduxModuleTypeContainer>
+      ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
+        ? ReduxModuleTypeContainerStoreActionCreator<
+            TReduxModuleTypeContainer['_modules']
+          >
+        : never
       : never
     : StoreStateAtPath<
         TReduxModuleTypeContainer['_actionCreatorType'],
+        TReduxModuleTypeContainer['_pathType']
+      >
+>;
+
+type ActionCreatorsBound<TActionCreators> = TActionCreators extends undefined
+  ? {}
+  : TActionCreators extends Record<string, (...args: any[]) => any>
+  ? {
+      [k in keyof TActionCreators]: (
+        ...args: Parameters<TActionCreators[k]>
+      ) => void;
+    }
+  : {};
+
+export type ReduxModuleTypeContainerStoreActionCreatorDispatchBound<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = UnionToIntersection<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
+    ? true extends IsReduxModuleTypeContainerComposite<TReduxModuleTypeContainer>
+      ? TReduxModuleTypeContainer['_modules'] extends ReduxModuleTypeContainerAny
+        ? ReduxModuleTypeContainerStoreActionCreator<
+            TReduxModuleTypeContainer['_modules']
+          >
+        : never
+      : never
+    : StoreStateAtPath<
+        ActionCreatorsBound<TReduxModuleTypeContainer['_actionCreatorType']>,
         TReduxModuleTypeContainer['_pathType']
       >
 >;
@@ -353,6 +384,23 @@ export type ReduxModuleTypeContainerCompositeAny =
     ReduxModuleTypeContainerAny,
     ReduxModuleTypeContainerAny
   >;
+
+export type IsReduxModuleTypeContainerComposite<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
+  ? true extends IsStrictlyAny<TReduxModuleTypeContainer['_modules']>
+    ? false
+    : true
+  : false;
+
+export type InferFromReduxModuleTypeContainerComposite<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
+  TReduxModuleTypeContainerInfer extends ReduxModuleTypeContainerAny
+> = TReduxModuleTypeContainer extends ReduxModuleTypeContainerCompositeAny
+  ? true extends IsStrictlyAny<TReduxModuleTypeContainer['_modules']>
+    ? never
+    : TReduxModuleTypeContainerInfer
+  : never;
 
 export type ReduxModuleTypeContainerWithImport<
   TReduxModuleTypeContainerTarget extends ReduxModuleTypeContainerAny,
