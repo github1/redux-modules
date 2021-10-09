@@ -572,6 +572,17 @@ describe('redux-modules', () => {
       });
     const store = mod3.asStore();
     expect(store.getState()).toBeDefined();
+
+    // combining with a interceptor only module should
+    // not expand action type contract to Action<any>
+    const mod4 = mod3.with(
+      createModule('mod4').intercept((action) => {
+        console.log(action);
+      })
+    );
+    expectType<
+      TypeOf<typeof mod4['_types']['_actionType'], { type: 'any-action-type' }>
+    >(false);
     // expect(store.module.name).toBe('test');
     // expect(store.module.modules.mod2.name).toBe('mod2');
   });
@@ -610,10 +621,7 @@ describe('redux-modules', () => {
       );
     type TAction = typeof mod['_types']['_actionType'];
     expectType<
-      TypeEqual<
-        TAction,
-        Action | { type: 'SOMETHING' } | { type: 'SOMETHING_ELSE' }
-      >
+      TypeEqual<TAction, { type: 'SOMETHING' } | { type: 'SOMETHING_ELSE' }>
     >(true);
   });
   it('exposes combined modules', () => {

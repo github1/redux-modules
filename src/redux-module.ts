@@ -121,6 +121,17 @@ type ReduxModuleTypeContainerActionIsUndefined<
   IsStrictlyAny<TReduxModuleTypeContainer['_actionType']>
 >;
 
+type ReduxModuleTypeContainerActionIsAnyAction<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = IsStrictlyAny<TReduxModuleTypeContainer['_actionType']['type']>;
+
+type ReduxModuleTypeContainerActionIsUndefinedOrAnyAction<
+  TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
+> = $OR<
+  ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>,
+  ReduxModuleTypeContainerActionIsAnyAction<TReduxModuleTypeContainer>
+>;
+
 type ReduxModuleTypeContainerStateIsUndefined<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny
 > = $OR<
@@ -774,8 +785,8 @@ type WithFunctionType<
   module: OtherModule
 ) => OtherModule extends ReduxModuleBase<infer TWReduxModule>
   ? TWReduxModule extends ReduxModuleTypeContainerAny
-    ? true extends ReduxModuleTypeContainerActionIsUndefined<TWReduxModule>
-      ? true extends ReduxModuleTypeContainerActionIsUndefined<TReduxModuleTypeContainer>
+    ? true extends ReduxModuleTypeContainerActionIsUndefinedOrAnyAction<TWReduxModule>
+      ? true extends ReduxModuleTypeContainerActionIsUndefinedOrAnyAction<TReduxModuleTypeContainer>
         ? ReduxModuleMayRequireInitialization<
             ReduxModuleTypeContainerCombinedWith<
               TReduxModuleTypeContainer,
