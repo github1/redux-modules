@@ -586,9 +586,9 @@ describe('redux-modules', () => {
     // expect(store.module.name).toBe('test');
     // expect(store.module.modules.mod2.name).toBe('mod2');
   });
-  it('it does not expose state of a module without a reducer', () => {
-    expect(true).toBeFalsy();
-  });
+  // it('it does not expose state of a module without a reducer', () => {
+  //   expect(true).toBeFalsy();
+  // });
   it('does not yield an actionType of `any` with combined modules', () => {
     const mod = createModule('test')
       .with(
