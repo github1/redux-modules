@@ -10,6 +10,9 @@ export function isAction<
   type: TSubString
 ): action is TAction extends TMatchingAction ? TAction : never {
   const parts = type.split('*');
+  if (!action || !action.type) {
+    return false;
+  }
   while (parts.length > 0) {
     if (!action.type.includes(parts.shift())) {
       return false;
