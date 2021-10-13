@@ -10,7 +10,7 @@ export function isAction<
   type: TSubString
 ): action is TAction extends TMatchingAction ? TAction : never {
   const parts = type.split('*');
-  if (!action || !action.type) {
+  if (!action || typeof action.type !== 'string') {
     return false;
   }
   while (parts.length > 0) {
