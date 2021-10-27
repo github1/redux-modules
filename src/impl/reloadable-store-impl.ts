@@ -6,11 +6,7 @@ import {
   ReduxModuleTypeContainerStoreActionCreator,
 } from '../redux-module';
 import { ReduxModuleStore } from '../redux-module-store';
-import {
-  ReduxActionListener,
-  ReduxActionTarget,
-  ReloadableStore,
-} from '../reloadable-store';
+import { ReloadableStore } from '../reloadable-store';
 
 export class ReloadableStoreImpl<
   TReduxModuleTypeContainer extends ReduxModuleTypeContainerAny,
@@ -20,35 +16,19 @@ export class ReloadableStoreImpl<
     TReduxModuleTypeContainer['_initializerPropsType']
   > = Required<TReduxModuleTypeContainer['_initializerPropsType']>,
   TStoreState extends ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer> = ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
-> implements ReloadableStore<TReduxModuleTypeContainer>, ReduxActionTarget
+> implements ReloadableStore<TReduxModuleTypeContainer>
 {
   private _store: ReduxModuleStore<TReduxModuleTypeContainer>;
-  private _listeners: ReduxActionListener[] = [];
   constructor(
     public readonly module: ReduxModule<TReduxModuleTypeContainer>,
     private readonly factory: () => ReduxModuleStore<TReduxModuleTypeContainer>
   ) {}
-  addActionListener(listener: ReduxActionListener) {
-    this._listeners.push(listener);
-  }
-  removeActionListener(listener: ReduxActionListener) {
-    const idx = this._listeners.indexOf(listener);
-    if (idx > -1) {
-      this._listeners.splice(idx, 1);
-    }
-  }
   reload(): ReloadableStore<TReduxModuleTypeContainer> {
     this._store = this.factory();
     return this;
   }
   get dispatch(): Dispatch<Extract<TAction, Action>> {
-    return (action) => {
-      const res = this.store.dispatch(action);
-      for (const listener of this._listeners) {
-        listener(action);
-      }
-      return res;
-    };
+    return this.store.dispatch;
   }
   get actions(): Readonly<TActionCreatorsInStore> {
     return this.store.actions as any;

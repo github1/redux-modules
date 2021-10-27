@@ -47,6 +47,10 @@ import {
 } from '../module-initializer';
 import { ReduxModuleStore } from '../redux-module-store';
 import { ReduxModuleReducer } from '../redux-module-reducer';
+import {
+  ADD_ACTION_LISTENER,
+  REMOVE_ACTION_LISTENER,
+} from '../redux-action-listener';
 
 /**
  * Factory function interface for middlewares which accept props.
@@ -392,6 +396,26 @@ class ReduxModuleImplementation<
             ) as any
         );
       }
+
+      const actionListeners = [];
+      modules.unshift(
+        createModule('_action_listener')
+          .preloadedState({ listeners: [] })
+          .intercept((action, context) => {
+            if (action.type === ADD_ACTION_LISTENER) {
+              actionListeners.push((action as any).listener);
+            } else if (action.type === REMOVE_ACTION_LISTENER) {
+              const idx = actionListeners.indexOf((action as any).listener);
+              if (idx > -1) {
+                actionListeners.splice(idx, 1);
+              }
+            } else {
+              for (const listener of actionListeners) {
+                listener(action, context);
+              }
+            }
+          }) as any
+      );
 
       // Group reducers based on top-level module key
       const reducerGroups: { [key: string]: Reducer[] } = modules
