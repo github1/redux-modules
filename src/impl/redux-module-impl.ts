@@ -517,16 +517,17 @@ class ReduxModuleImplementation<
           module.postConfigure(store as any);
         }
       });
-
       return store;
     };
-    if (options.deferred) {
-      return new ReloadableStoreImpl<TReduxModuleTypeContainer>(
+    const reloadableStore: ReloadableStoreImpl<TReduxModuleTypeContainer> =
+      new ReloadableStoreImpl<TReduxModuleTypeContainer>(
         this as any,
         storeFactory
       );
+    if (!options.deferred) {
+      reloadableStore.reload();
     }
-    return storeFactory();
+    return reloadableStore;
   }
 }
 
