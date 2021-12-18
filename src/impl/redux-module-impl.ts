@@ -231,12 +231,18 @@ class ReduxModuleImplementation<
 
   public intercept(interceptor: Interceptor<any, any, any, any>) {
     return this.on((store) => (next) => (action) => {
-      next(action);
+      let shouldCancelInterceptedAction = false;
       const result = interceptor(action, {
         actions: store.actions,
         state: store.getState(),
         props: store.props,
+        cancelInterceptedAction: () => {
+          shouldCancelInterceptedAction = true;
+        },
       });
+      if (!shouldCancelInterceptedAction) {
+        next(action);
+      }
       if (result) {
         (Array.isArray(result) ? result : [result])
           .filter((item) => item)

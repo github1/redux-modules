@@ -728,6 +728,7 @@ export type Interceptor<
     state: TStoreState;
     actions: TActionCreators;
     props: TProps;
+    cancelInterceptedAction: () => void;
   }
 ) => void | TAction | TAction[] | ThunkAction<any, TStoreState, any, TAction>;
 
