@@ -51,6 +51,7 @@ import {
   ADD_ACTION_LISTENER,
   REMOVE_ACTION_LISTENER,
 } from '../redux-action-listener';
+import { StoreFromOptions } from '../store-from-options';
 
 /**
  * Factory function interface for middlewares which accept props.
@@ -60,18 +61,70 @@ type MiddlewareFactory<TStoreState, TAction extends Action> = (
   actions: any
 ) => Middleware<{}, TStoreState, ThunkDispatch<TStoreState, any, TAction>>[];
 
+type StorePendingInitialization = {
+  propsInitialized: boolean;
+  pendingInitActions: Action[];
+};
+
+function getNormalizedActionType(action: Action): string {
+  if (action.type.includes('PROBE_UNKNOWN_ACTION')) {
+    return 'PROBE_UNKNOWN_ACTION';
+  }
+  return action.type;
+}
+
+const REDUCER_STATE_UNDEFINED = { __reducer_state_undefined: true };
+const LOGGING = false;
+
 function runReducer(
   id: string,
+  paths: string[],
   state: any,
   initialStoreState: any,
   action: any,
   props: any,
-  reducers: ReduxModuleReducer<any>[]
+  reducers: ReduxModuleReducer<any>[],
+  storePendingInitialization: StorePendingInitialization
 ): any {
+  const defaultState = state || initialStoreState[id];
+  if (!storePendingInitialization.propsInitialized) {
+    if (LOGGING) {
+      console.log('reducer-pending', id, paths, action);
+    }
+    if (
+      storePendingInitialization.pendingInitActions.findIndex(
+        (pa) => getNormalizedActionType(pa) === getNormalizedActionType(action)
+      ) === -1
+    ) {
+      storePendingInitialization.pendingInitActions.push(action);
+    }
+    return defaultState || REDUCER_STATE_UNDEFINED;
+  }
   return reducers.reduce((reducedState, reducer) => {
-    const newState = reducer(reducedState, action, props);
-    return newState === undefined ? {} : newState;
-  }, state || initialStoreState[id]);
+    // If the reducer state is effectively undefined, we want to actually pass undefined
+    // to the reducer so default argument values get used
+    const reducedStateToUse = reducedState.__reducer_state_undefined
+      ? undefined
+      : reducedState;
+    let newState = reducer(reducedStateToUse, action, props);
+    if (LOGGING) {
+      console.log(
+        'reducer-not-pending-after',
+        id,
+        paths,
+        reducers.length,
+        action,
+        reducedState,
+        reducedStateToUse,
+        newState
+      );
+    }
+    if (typeof newState === 'undefined') {
+      return REDUCER_STATE_UNDEFINED;
+    }
+    newState = { ...newState, __reducer_state_undefined: false };
+    return newState;
+  }, defaultState);
 }
 
 class ReduxModuleImplementation<
@@ -322,17 +375,16 @@ class ReduxModuleImplementation<
     }
   }
 
-  public getInitializedProps() {
-    const modules: ReduxModuleImplementation<any, any, any, any, any, any>[] =
-      [];
-    this.collectModules(this, modules);
-    const actionCreators = Object.freeze(
-      modules.reduce((creators, module) => {
-        return { ...creators, ...wrapInPath(module.actions, module.path) };
-      }, {})
-    );
+  public getInitializedProps(
+    store: StoreFromOptions<
+      TReduxModuleTypeContainer,
+      ReduxModuleStoreOptions<
+        ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
+      >
+    >
+  ) {
     const providedPropsContext = {
-      actions: Object.freeze({ ...actionCreators, ...this.actions }),
+      store,
     };
     return (
       (this.providedProps instanceof Function
@@ -362,26 +414,6 @@ class ReduxModuleImplementation<
         modules.reduce((creators, module) => {
           return { ...creators, ...wrapInPath(module.actions, module.path) };
         }, {})
-      );
-
-      const providedPropsContext = {
-        actions: Object.freeze({ ...actionCreators, ...this.actions }),
-      };
-
-      const combinedModulesInitializedProps = modules.reduce(
-        (combined, module) => {
-          return { ...combined, ...module.getInitializedProps() };
-        },
-        {}
-      );
-
-      const initializedProps = Object.freeze(
-        this.propsInitializer({
-          ...combinedModulesInitializedProps,
-          ...((this.providedProps instanceof Function
-            ? this.providedProps(providedPropsContext)
-            : this.providedProps) || {}),
-        })
       );
 
       if (options.record) {
@@ -423,13 +455,21 @@ class ReduxModuleImplementation<
           }) as any
       );
 
+      // Module paths which by reducer group key
+      const reducerGroupPaths: Record<string, string[]> = {};
+
       // Group reducers based on top-level module key
-      const reducerGroups: { [key: string]: Reducer[] } = modules
+      const reducerGroups: Record<string, Reducer[]> = modules
         .filter((module) => module.reducer)
         .reduce((reducers, module) => {
           let reducerToAdd = module.reducer;
           const reducerGroupKey = module.path[0];
           reducers[reducerGroupKey] = reducers[reducerGroupKey] || [];
+          reducerGroupPaths[reducerGroupKey] =
+            reducerGroupPaths[reducerGroupKey] || [];
+          if (!reducerGroupPaths[reducerGroupKey].includes(module.rawPath)) {
+            reducerGroupPaths[reducerGroupKey].push(module.rawPath);
+          }
           if (module.path.length > 1) {
             // remove root key as redux already accounts for this
             const modulePathMinusRootKey = module.path.slice();
@@ -447,9 +487,9 @@ class ReduxModuleImplementation<
                 action,
                 combinedPropsForReducer
               );
-              if (result && stateOutput) {
+              if (result) {
                 return mergeDeep(
-                  stateOutput,
+                  stateOutput || {},
                   wrapInPath(result, modulePathMinusRootKey.slice())
                 );
               }
@@ -475,18 +515,27 @@ class ReduxModuleImplementation<
         options.preloadedState || {}
       );
 
+      const initializedProps = {};
+      const storePendingInitialization: StorePendingInitialization = {
+        propsInitialized: false,
+        pendingInitActions: [],
+      };
+
       // build store
       const reducers = combineReducers<TStoreState>(
         Object.keys(reducerGroups).reduce((reducers, key) => {
-          reducers[key] = (state: any, action: any) =>
-            runReducer(
+          reducers[key] = (state: any, action: any) => {
+            return runReducer(
               key,
+              reducerGroupPaths[key],
               state,
               initialStoreState,
               action,
               initializedProps,
-              reducerGroups[key]
+              reducerGroups[key],
+              storePendingInitialization
             );
+          };
           return reducers;
         }, {}) as ReducersMapObject<TStoreState, any>
       );
@@ -519,6 +568,7 @@ class ReduxModuleImplementation<
           })
         );
       }
+
       let composeEnhancers = compose;
       if (options.enableReduxDevTools && typeof window !== 'undefined') {
         composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
@@ -538,8 +588,28 @@ class ReduxModuleImplementation<
       );
       // expose action creators from all of the modules on the store
       (store as any).actions = actionCreators;
-      (store as any).props = initializedProps;
       (store as any).module = this;
+
+      const providedPropsContext = {
+        store,
+      };
+
+      const combinedModulesInitializedProps = modules.reduce(
+        (combined, module) => {
+          return { ...combined, ...module.getInitializedProps(store) };
+        },
+        {}
+      );
+      (store as any).props = Object.assign(
+        initializedProps,
+        this.propsInitializer({
+          ...combinedModulesInitializedProps,
+          ...((this.providedProps instanceof Function
+            ? this.providedProps(providedPropsContext)
+            : this.providedProps) || {}),
+        })
+      );
+      Object.freeze((store as any).props);
 
       // run post configure functions
       modules.forEach((module) => {
@@ -547,6 +617,23 @@ class ReduxModuleImplementation<
           module.postConfigure(store as any);
         }
       });
+
+      // Run deferred/pending actions now that props are initialized
+      if (!storePendingInitialization.propsInitialized) {
+        storePendingInitialization.propsInitialized = true;
+        while (storePendingInitialization.pendingInitActions.length > 0) {
+          const initAction =
+            storePendingInitialization.pendingInitActions.shift();
+          try {
+            store.dispatch(initAction);
+          } catch (err) {
+            if (!/^A state mutation was/.test(err.message)) {
+              throw err;
+            }
+          }
+        }
+      }
+
       return store;
     };
     const reloadableStore: ReloadableStoreImpl<TReduxModuleTypeContainer> =

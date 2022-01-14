@@ -914,7 +914,12 @@ export type ProvidedModuleProps<
   TProps = any
 > =
   | ((context?: {
-      actions: ReduxModuleTypeContainerStoreActionCreatorWithLocal<TReduxModuleTypeContainer>;
+      store: StoreFromOptions<
+        TReduxModuleTypeContainer,
+        ReduxModuleStoreOptions<
+          ReduxModuleTypeContainerStoreState<TReduxModuleTypeContainer>
+        >
+      >;
     }) => TProps)
   | TProps;
 

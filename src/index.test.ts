@@ -68,7 +68,8 @@ describe('redux-modules', () => {
       expectType<TypeEqual<typeof props, Readonly<{ someValue: boolean }>>>(
         true
       );
-      expect(props.someValue).toBe(true);
+      // props should be available in first reducer run
+      expect(props.someValue).toBeTruthy();
       expect(action).toBeDefined();
       return state;
     });
@@ -108,7 +109,7 @@ describe('redux-modules', () => {
     });
     combinedInitialized
       .configure((store) => {
-        expect(store.props.someValue).toBe(true);
+        expect(store.props.someValue).toBeTruthy();
         expect(store.props.anotherValue).toBe('processed_another_value');
         expectType<
           TypeEqual<
@@ -162,10 +163,12 @@ describe('redux-modules', () => {
     expectType<'initialize' extends keyof typeof mod ? true : false>(true);
     // but also skip initialization and just create the store
     expectType<'asStore' extends keyof typeof mod ? true : false>(true);
+    // uses default if no explicit initialization
+    expect(mod.asStore().getState().test.something).toBe('this-is-the-default');
+    // uses value provided by explicit initialization
     expect(
       mod.initialize({ id: 'override' }).asStore().getState().test.something
     ).toBe('override');
-    expect(mod.asStore().getState().test.something).toBe('this-is-the-default');
   });
   it('combining an uninitialized module with an uninitialized module which has optional props results in an uninitialized module', () => {
     const mod = createModule('test')
@@ -272,17 +275,15 @@ describe('redux-modules', () => {
           },
         },
       })
-        .initialize(({ actions }) => {
+        .initialize(({ store }) => {
           expectType<
             TypeEqual<
-              typeof actions,
-              { test: { doSomething: () => ActionTypes } } & {
-                doSomething: () => ActionTypes;
-              }
+              typeof store.actions,
+              Readonly<{ test: { doSomething: () => ActionTypes } }>
             >
           >(true);
           return {
-            something: actions.test.doSomething().type,
+            something: store.actions.test.doSomething().type,
           };
         })
         .asStore().props.something
@@ -456,7 +457,10 @@ describe('redux-modules', () => {
         store.dispatch({ type: 'SOME_ACTION' });
       })
       .asStore();
-    expect(store.getState().foo.actionTypes[1]).toBe('SOME_ACTION');
+    const actionTypes = store
+      .getState()
+      .foo.actionTypes.filter((t) => !/@@/.test(t));
+    expect(actionTypes[0]).toBe('SOME_ACTION');
   });
   it('can have a nested store path', () => {
     createModule('foo->bar->baz')
@@ -528,8 +532,11 @@ describe('redux-modules', () => {
     >(true);
     store.dispatch({ type: 'SOME_ACTION' });
     expect(store.getState().foo.bar.fooBar).toBe('abc');
-    expect(store.getState().foo.bar.baz.actionTypes.length).toBe(1);
-    expect(store.getState().foo.bar.baz.actionTypes[0]).toBe('SOME_ACTION');
+    const actionTypes = store
+      .getState()
+      .foo.bar.baz.actionTypes.filter((t) => !/@@/.test(t));
+    expect(actionTypes.length).toBe(1);
+    expect(actionTypes[0]).toBe('SOME_ACTION');
   });
   it('can be combined with other modules', () => {
     const mod1 = createModule('test').reduce(
@@ -960,10 +967,10 @@ describe('redux-modules', () => {
       .dispatch({ type: 'SOME_ACTION' });
     expect(Array.from(messages)).toHaveLength(2);
     expect(Array.from(messages)[0]).toContain(
-      "Cannot assign to read only property 'something' of object"
+      "Cannot assign to read only property 'doSomething' of object"
     );
     expect(Array.from(messages)[1]).toContain(
-      "Cannot assign to read only property 'doSomething' of object"
+      "Cannot assign to read only property 'something' of object"
     );
   });
   it('a module is assignable to ReduxModuleBase<ReduxModuleTypeContainerAny>', () => {
@@ -1277,7 +1284,7 @@ describe('redux-modules', () => {
           })
         );
       // end
-      console.log(mod);
+      // console.log(mod);
     });
   });
 });
