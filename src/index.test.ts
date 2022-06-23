@@ -1215,7 +1215,7 @@ describe('redux-modules', () => {
   });
   describe('Type instantiation is excessively deep and possibly infinite', () => {
     it('handles this error', () => {
-      const mod = createModule('ROOT', {
+      createModule('ROOT', {
         actionCreators: {
           doROOT_A(): { type: 'ROOT_A' } {
             return null;
